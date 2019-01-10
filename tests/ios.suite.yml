@@ -1,0 +1,19 @@
+class_name: IosTester
+modules:
+  enabled:
+  - \Appium\AppiumDriver
+  -  Asserts
+  - \Helper\Ios
+  config:
+    \Appium\AppiumDriver:
+      host: 0.0.0.0
+      port: 4723
+      capabilities:
+        nativeWebTap: true
+        browserName: 'Safari'
+        platformName: 'iOS'
+        platformVersion: '12.0'
+        deviceName: 'iPhone 8'
+        automationName: 'XCUITest'
+        connection_timeout: 360
+        request_timeout: 360

@@ -1,0 +1,5 @@
+{
+  "require": {
+    "me-io/appium-driver-codeception": "~1"
+  }
+}
