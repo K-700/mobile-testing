@@ -1,5 +1,5 @@
 <?php
-namespace Page\ShopItem;
+namespace Exception;
 
 use Helper\ShopItem;
 

@@ -1,6 +1,7 @@
 <?php
 namespace Page\ShopItem;
 
+use Exception\ItemIsOutOfStockException;
 use Helper\Cart;
 use Helper\ShopItem;
 use Page\CacklePage;
@@ -67,16 +68,15 @@ class ShopItemCardPage
         $this->addToCartButton = ["using" => "class name", "value" => "put-item-button"];
 
         $this->descriptionContent = ["using" => "xpath", "value" => "//div[@data-tab='submenu-content-description']"];
-        $this->descriptionButton = ["using" => "xpath", "value" => "//div[@data-tab-target='submenu-content-description']"];
+        $this->descriptionButton = ["using" => "xpath", "value" => "//span[@data-tab-target='submenu-content-description']"];
 
         $this->addToQuantityButton = ["using" => "class name", "value" => "imk-icon-keyboard-arrow-up"];
         $this->subFromQuantityButton = ["using" => "class name", "value" => "imk-icon-keyboard-arrow-down"];
 
-        $this->commentsButton = ["using" => "xpath", "value" => "//div[@data-tab='submenu-content-reviews']"];
+        $this->commentsButton = ["using" => "css selector", "value" => "span[data-tab-target='submenu-content-reviews']"];
         $this->commentsCount = ["using" => "id", "value" => "item-view-review-count"];
         $this->commentsBlock = new CacklePage($I);
     }
-
 
     /**
      * Проверка полей с описанием свойств (напр. "Артикул", "Производитель" и т.п.)
@@ -97,21 +97,27 @@ class ShopItemCardPage
     {
         $I = $this->tester;
 
-        $I->by($this->addToQuantityButton)->click();
+        $addToQuantityButton = $I->by($this->addToQuantityButton);
+        $I->verticalSwipeToElement($addToQuantityButton);
+        $addToQuantityButton->click();
     }
 
     public function reduceQuantityByOne()
     {
         $I = $this->tester;
 
-        $I->by($this->subFromQuantityButton)->click();
+        $subFromQuantityButton = $I->by($this->subFromQuantityButton);
+        $I->verticalSwipeToElement($subFromQuantityButton);
+        $subFromQuantityButton->click();
     }
 
     public function grabQuantity()
     {
         $I = $this->tester;
 
-        return (int)$I->by($this->quantity)->text();
+        $quantity = $I->by($this->quantity);
+        $I->verticalSwipeToElement($quantity);
+        return (int)$quantity->value();
     }
 
     public function grabPrice()
@@ -130,11 +136,12 @@ class ShopItemCardPage
     {
         $I = $this->tester;
 
-        $I->click($this->quantity);
-        $I->by($this->quantity)->clear();
+        $quantity = $I->by($this->quantity);
+        $quantity->click();
+        $quantity->clear();
         // Стираем 1 которая уже есть в поле
-//        $I->sendKeys($I->by($this->quantity), \WebDriverKeys::BACKSPACE);
-        $I->by($this->quantity)->value($numberToInput);
+        $quantity->setValueImmediate(\WebDriverKeys::BACKSPACE);
+        $quantity->value($numberToInput);
     }
 
     /**
@@ -142,20 +149,23 @@ class ShopItemCardPage
      *
      * @param int $numberToAdd Сколько товара необходимо добавить в корзину
      * @param Cart|null $cart Ссылка на карточку с товарами
-     * @throws ItemIsOutOfStockException Товар закончился на складе
      */
     public function addItemsToCart($numberToAdd, Cart &$cart = null)
     {
         $I = $this->tester;
 
         $this->inputQuantity($numberToAdd);
-        $I->click($this->addToCartButton);
-        if ($I->by($this->addToCartButton)->text() == 'Сообщить о поступлении') {
-            throw new ItemIsOutOfStockException(new ShopItem($I->by($this->name)->text(), $this->grabPrice()));
+        $I->by($this->addToCartButton)->click();
+        try {
+            if ($I->by($this->addToCartButton)->text() == 'Сообщить о поступлении') {
+                throw new ItemIsOutOfStockException(new ShopItem($I->by($this->name)->text(), $this->grabPrice()));
+            }
+        } catch (ItemIsOutOfStockException $e) {
+            $I->incomplete($e->getMessage());
         }
         // добавляем товар в карточку только если он остался на складе (не было исключения)
         if (!is_null($cart)) {
-            $cart->addItems(new ShopItem(new ShopItem($I->by($this->name)->text(), $this->grabPrice()), $this->grabQuantity());
+            $cart->addItems(new ShopItem($I->by($this->name)->text(), $this->grabPrice()), $this->grabQuantity());
         }
     }
 }

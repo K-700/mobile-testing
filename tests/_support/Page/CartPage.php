@@ -1,7 +1,8 @@
-
 <?php
 namespace Page;
 
+use Exception\ItemIsOutOfStockException;
+use Facebook\WebDriver\Exception\ElementNotVisibleException;
 use Helper\Cart;
 use Helper\ShopItem;
 
@@ -9,9 +10,10 @@ class CartPage
 {
     /** Entity constants */
     const CART = 1;
-//    const LITTLE_CART = 2;
 //    const CHECKOUT_CART = 3;
 //    const FINISH_CART = 4;
+
+    protected $url;
 
     /** @var \IosTester */
     protected $tester;
@@ -41,7 +43,6 @@ class CartPage
     public $addButton;
     public $subButton;
     public $deleteButton;
-    public $totalQuantityCircle;
 //    /** finish cart */
 //    public $discount;
 
@@ -51,201 +52,241 @@ class CartPage
         $this->cart = $cart;
         $this->entity = $constEntity;
 
-        $this->shopItemRoot = ['using' => 'class name', 'value' => 'shop-cart-item-data'];
+        // TODO: ВНИМАНИЕ! Если изменятся локаторы на этой странице, то нужно не забыть поменять их в функциях getShopItemAddButton и getShopItemSubButton
+//        $this->shopItemRoot = ['using' => 'class name', 'value' => 'shop-cart-item-data'];
+        $this->shopItemRoot = ['using' => 'xpath', 'value' => "//tr[@class='shop-cart-item-data']"];
         $this->shopItemName = ['using' => 'class name', 'value' => 'cart_table_name'];
         $this->shopItemPrice = ['using' => 'class name', 'value' => 'cart_table_price'];
         $this->shopItemQuantity = ['using' => 'class name', 'value' => 'cart_table_quantity'];
         $this->shopItemTotalPrice = ['using' => 'class name', 'value' => 'cart_table_summary'];
         $this->deleteButton = ['using' => 'class name', 'value' => 'imk-icon-close'];
-        $this->addButton = ['using' => 'xpath', 'value' => "//span[@class='circle-button' and text()[contains(.,'+')]]"];
-        $this->subButton = ['using' => 'xpath', 'value' => "//span[@class='circle-button' and text()[contains(.,'-')]]"];
-        $this->totalQuantityCircle = ['using' => 'class name', 'value' => 'quantity-badge'];
+        //addButton subButton должны быть в xpath для функции findShopItemNameWithActiveButton
+        $this->addButton = ['using' => 'xpath', 'value' => "//span[@class='circle-button' and contains(text(), '+')]"];
+        $this->subButton = ['using' => 'xpath', 'value' => "//span[@class='circle-button' and contains(text(), '-')]"];
         $this->totalPrice = ['using' => 'id', 'value' => 'order-price'];
-//        $this->tableHeaders = [
-//            'photo' => [
-//                'name' => 'Фото',
-//                'column' => 1
-//            ],
-//            'name' => [
-//                'name' => 'Название',
-//                'column' => 2
-//            ],
-//            'price' => [
-//                'name' => 'Цена',
-//                'column' => 3
-//            ],
-//            'quantity' => [
-//                'name' => 'Кол-во',
-//                'column' => 4
-//            ],
-//            'total price' => [
-//                'name' => 'Сумма',
-//                'column' => 5
-//            ],
-//            'delete' => [
-//                'name' => 'Удалить',
-//                'column' => 6
-//            ],
-//        ];
-//
+
         switch ($constEntity) {
             case self::CART:
-                $this->root = ['using' => 'id', 'value' => '#carttbl'];
-                $this->table = ['using' => 'full-cart-table'];
+                $this->root = ['using' => 'id', 'value' => 'carttbl'];
+                $this->table = ['using' => 'class name', 'value' => 'full-cart-table'];
+                $this->url = '/shop/cart/';
                 break;
 //            case self::CHECKOUT_CART:
 //                $this->root = Locator::find('div', ['class' => 'cart-final-block']);
 //                $this->table = Locator::find('table', ['class' => 'shop_cart_table all_cart_table_shop checkout-cart-table']);
 //                $this->totalPrice = Locator::toXPath('#order-price');
 //                break;
-//            case self::LITTLE_CART:
-//                $this->root = Locator::toXPath('#little-cart');
-//                $this->table = $this->root . Locator::find('table', ['class' => 'shop_cart_table']);
-//                $this->totalPrice = Locator::toXPath('.alltotal_price_number');
-//                $this->totalQuantityCircle = '.quantity-badge';
-//                $this->goToCartButton = 'Перейти в корзину';
-//                $this->height = 34;
-//                break;
 //            case self::FINISH_CART:
 //                $this->root = Locator::find('div', ['class' => 'print-area']);
 //                $this->table = $this->root . Locator::find('table', ['class' => 'shop_cart_table']);
 //                $this->totalPrice = Locator::elementAt(Locator::contains('td', 'Итого') . '/ancestor::tr//td', 3);
 //                $this->discount = Locator::elementAt(Locator::contains('td', 'скидка') . '/ancestor::tr//td', 3);
-//                $this->tableHeaders = [
-//                    'name' => [
-//                        'name' => 'Наименование',
-//                        'column' => 1
-//                    ],
-//                    'vendor id' => [
-//                        'name' => 'Артикул',
-//                        'column' => 2
-//                    ],
-//                    'quantity' => [
-//                        'name' => 'Количество',
-//                        'column' => 3
-//                    ],
-//                    'price' => [
-//                        'name' => 'Цена',
-//                        'column' => 4
-//                    ],
-//                    'total price' => [
-//                        'name' => 'Сумма',
-//                        'column' => 5
-//                    ]
-//                ];
-//
 //                break;
         }
     }
 
+    public function grabShopItemName($shopItem)
+    {
+        $I = $this->tester;
+
+        $shopItemName = $I->findElementFromElementBy($shopItem, $this->shopItemName);
+        $I->verticalSwipeToElement($shopItemName);
+        return $shopItemName->text();
+    }
+
+    public function grabShopItemPrice(\PHPUnit_Extensions_Selenium2TestCase_Element $shopItem)
+    {
+        $I = $this->tester;
+
+        $shopItemPrice = $I->findElementFromElementBy($shopItem, $this->shopItemPrice);
+        $I->verticalSwipeToElement($shopItemPrice);
+        if ($I->grabIntFromString($shopItemPrice->text() == 1)) {
+            codecept_debug($shopItemPrice->text());
+            $I->pauseExecution();
+        }
+        return $I->grabIntFromString($shopItemPrice->text());
+    }
+
+    public function grabShopItemQuantity(\PHPUnit_Extensions_Selenium2TestCase_Element $shopItem)
+    {
+        $I = $this->tester;
+
+        return $I->grabIntFromString($I->findElementFromElementBy($shopItem, $this->shopItemQuantity)->text());
+    }
+
+    public function grabShopItemTotalPrice(\PHPUnit_Extensions_Selenium2TestCase_Element $shopItem)
+    {
+        $I = $this->tester;
+
+        return $I->grabIntFromString($I->findElementFromElementBy($shopItem, $this->shopItemTotalPrice)->text());
+    }
+
+    public function grabTotalPrice()
+    {
+        $I = $this->tester;
+
+        return $I->grabIntFromString($I->by($this->totalPrice)->text());
+    }
+
     /**
-     * Finds first item in cart with active "+" or "-" button
+     * Возвращает кнопку '+' для переданного товара
+     *
+     * Зачем это надо, если можно сделать
+     *      $I->findElementFromElementBy($shopItem, $this->addButton);
+     * ?. Пробовала, это не прокатывает (скорее всего, из-за того, что товары присутствуют в DOM в 2х экземплярах
+     * Но Appium пофиг, что мы ищем кнопку через XPath от конкретного элемента, который уже найден,
+     * а не от корня DOM), так что пришлось выкручиваться. Причем, если задать кнопку не XPath а CSS, то он ее
+     * найдет (что доказывается кнопкой удаления товара), но через CSS нельзя делать выборку по контенту, что необходимо в нашем случае
+     *
+     * @param \PHPUnit_Extensions_Selenium2TestCase_Element $shopItem
+     * @return \Appium\TestCase\Element|\PHPUnit_Extensions_Selenium2TestCase_Element
+     */
+    public function getShopItemAddButton($shopItem)
+    {
+        $I = $this->tester;
+
+        $name = $this->grabShopItemName($shopItem);
+        return $I->by(["using" => "xpath", "value" => "//*[@id='carttbl']//a[contains(text(), '$name')]/ancestor::tr[@class='shop-cart-item-data']{$this->addButton['value']}"]);
+    }
+
+    /**
+     * Возвращает кнопку '-' для переданного товара
+     *
+     * Зачем это надо, если можно сделать
+     *      $I->findElementFromElementBy($shopItem, $this->subButton);
+     * ?. Пробовала, это не прокатывает (скорее всего, из-за того, что товары присутствуют в DOM в 2х экземплярах
+     * Но Appium пофиг, что мы ищем кнопку через XPath от конкретного элемента, который уже найден,
+     * а не от корня DOM), так что пришлось выкручиваться. Причем, если задать кнопку не XPath а CSS, то он ее
+     * найдет (что доказывается кнопкой удаления товара), но через CSS нельзя делать выборку по контенту, что необходимо в нашем случае
+     *
+     * @param \PHPUnit_Extensions_Selenium2TestCase_Element $shopItem
+     * @return \Appium\TestCase\Element|\PHPUnit_Extensions_Selenium2TestCase_Element
+     */
+    public function getShopItemSubButton($shopItem)
+    {
+        $I = $this->tester;
+
+        $name = $this->grabShopItemName($shopItem);
+        return $I->by(["using" => "xpath", "value" => "//*[@id='carttbl']//a[contains(text(), '$name')]/ancestor::tr[@class='shop-cart-item-data']{$this->subButton['value']}"]);
+    }
+
+    /**
+     * Finds first item in cart with active "+" button
      *
      * @param CartPage->addButton|CartPage->subButton $button
-     * @return string Name of found item
+     * @return \PHPUnit_Extensions_Selenium2TestCase_Element found item
      */
-    public function findShopItemNameWithActiveButton($button)
+    public function findShopItemWithActiveAddButton()
     {
         $I = $this->tester;
 
-        return $I->by($this->table . $button . '/ancestor::tr' . $this->shopItemName);
+        $shopItems = $I->findElementsFromElementBy($I->by($this->root), $this->shopItemRoot);
+        foreach ($shopItems as $shopItem) {
+            if ($this->getShopItemAddButton($shopItem)->displayed()) {
+                return $shopItem;
+            }
+        }
+        $I->skip("Can't find element with active '+' button");
     }
 
     /**
-     * @param string $shopItemName
+     * @param \PHPUnit_Extensions_Selenium2TestCase_Element $shopItem
      * @param int $numberToAdd number of items to add
      */
-    public function addItems($shopItemName, $numberToAdd)
+    public function addItems($shopItem, $numberToAdd)
     {
         $I = $this->tester;
-        $shopItemAddButton = $this->table . Locator::contains('tr', $shopItemName) . $this->addButton;
 
-        $I->amGoingTo("add $numberToAdd item(s)");
-        $this->cart->addItems(new ShopItem($shopItemName), $numberToAdd);
-        for ($i = 0; $i < $numberToAdd; $i++) {
-            $I->click($shopItemAddButton);
-            $I->waitAllScripts();
+        try {
+            $I->amGoingTo("add $numberToAdd item(s)");
+            for ($i = 0; $i < $numberToAdd; $i++) {
+                $addButton = $this->getShopItemAddButton($shopItem);
+                if ($addButton->displayed()) {
+                    $addButton->click();
+                } else {
+                    throw new ItemIsOutOfStockException(new ShopItem($this->grabShopItemName($shopItem), $this->grabShopItemPrice($shopItem)));
+                }
+            }
+        } catch (ItemIsOutOfStockException $e) {
+            // мы не знаем, тест сфейлился потому что товар кончился, или потому что кнопка отвалилась, поэтому напишем обе ошибки. Для проверки можно будет запустить тест еще пару раз
+            $I->incomplete("Element with strategy '{$this->addButton['using']}' and value '{$this->addButton['value']} is not visible or not exists' or " . ($e->getMessage()));
         }
+
+        $this->cart->addItems(new ShopItem($this->grabShopItemName($shopItem)), $numberToAdd);
     }
 
     /**
-     * @param string $shopItemName
+     * @param \PHPUnit_Extensions_Selenium2TestCase_Element $shopItem
      * @param int $numberToSub number of items to sub
      */
-    public function subItems($shopItemName, $numberToSub)
+    public function subItems($shopItem, $numberToSub)
     {
         $I = $this->tester;
-        $shopItemSubButton = $this->table . Locator::contains('tr', $shopItemName) . $this->subButton;
 
-        $I->amGoingTo("sub $numberToSub item(s)");
-        $this->cart->subItems(new ShopItem($shopItemName), $numberToSub);
-        for ($i = 0; $i < $numberToSub; $i++) {
-            $I->click($shopItemSubButton);
-            $I->waitAllScripts();
+        try {
+            $I->amGoingTo("sub $numberToSub item(s)");
+            for ($i = 0; $i < $numberToSub; $i++) {
+                $subButton = $this->getShopItemSubButton($shopItem);
+                if ($subButton->displayed()) {
+                    $subButton->click();
+                } else {
+                    throw new ElementNotVisibleException("Element with strategy '{$this->subButton['using']}' and value '{$this->subButton['value']} is not visible or not exists'");
+                }
+            }
+        } catch (ElementNotVisibleException $e) {
+            $I->fail($e->getMessage());
         }
+
+        $this->cart->subItems(new ShopItem($this->grabShopItemName($shopItem)), $numberToSub);
     }
 
     /**
-     * @param string $shopItemName
+     * @param \PHPUnit_Extensions_Selenium2TestCase_Element $shopItem
      */
-    public function deleteItem($shopItemName)
+    public function deleteItem($shopItem)
     {
         $I = $this->tester;
-        $shopItemDeleteButton = $this->table . Locator::contains('tr', $shopItemName) . $this->deleteButton;
 
         $I->amGoingTo('delete item');
-        $this->cart->deleteItem(new ShopItem($shopItemName));
-        $I->click($shopItemDeleteButton);
-        $I->waitAllScripts();
-        $I->dontSee($shopItemName, $this->table);
-    }
-
-    public function getItemQuantity($shopItemName)
-    {
-        $I = $this->tester;
-
-        $I->moveMouseOver($this->root);
-        return $I->grabFloatFrom($this->root . Locator::contains('tr', $shopItemName) . $this->shopItemQuantity);
+        $this->cart->deleteItem(new ShopItem($this->grabShopItemName($shopItem)));
+        $I->findElementFromElementBy($shopItem, $this->deleteButton)->click();
     }
 
     public function checkItems()
     {
         $I = $this->tester;
-        if ($this->entity == self::LITTLE_CART) {
-            $I->moveMouseOver($this->root);
-        }
+        $headerPage = new HeaderPage($I);
 
-        $I->comment('Check table headers');
-        foreach ($this->tableHeaders as $goodsTableHeader) {
-            $I->canSee($goodsTableHeader['name'], Locator::elementAt($this->table . "//th", $goodsTableHeader['column']));
+        if ($this->entity == self::CART && $I->getRelativeUrl() != $this->url) {
+            // если находимся фиг знает где, то перейдем в корзину
+            $I->by($headerPage->basketButton)->click();
         }
 
         $I->comment('Check all items');
-        foreach ($this->cart->shopItems as $shopItem) {
-            $I->see($shopItem->getName(), $this->root);
-            //tr где находится выбранный item для дальнейшей обработки
-            $shopItemTr =  "$this->root//tr[.//*[contains(text(), '{$shopItem->getName()}')]]";
-            $shopItemPrice = $I->grabIntFrom(Locator::elementAt("$shopItemTr/td", $this->tableHeaders['price']['column']));
-            $shopItemQuantity = $I->grabFloatFrom(Locator::elementAt("$shopItemTr/td", $this->tableHeaders['quantity']['column']));
-            $shopItemTotalPrice = $I->grabIntFrom(Locator::elementAt("$shopItemTr/td", $this->tableHeaders['total price']['column']));
+        foreach ($I->findElementsBy($this->shopItemRoot) as $shopItemOnPage)
+        {
+            $I->verticalSwipeToElement($shopItemOnPage);
+            $I->expectTo("see item from page in cart");
+            $shopItem = $this->cart->shopItems[$this->grabShopItemName($shopItemOnPage)];
 
-            $I->amGoingTo('check price of added item in cart');
-            $I->assertEqualsWithPermissibleLimitsOfErrors($shopItem->getPrice(), $shopItemPrice, 1);
-            $I->amGoingTo('check quantity of added item in cart');
-            $I->assertEquals($shopItem->quantity, $shopItemQuantity);
-            $I->amGoingTo('check total price of added item in cart');
-            $itemTotalPrice = $shopItem->getTotalPrice();
-            $I->assertEqualsWithPermissibleLimitsOfErrors($itemTotalPrice, $shopItemTotalPrice, 2);
+            $I->amGoingTo("compare prices");
+            $I->assertEquals($shopItem->getPrice(), $this->grabShopItemPrice($shopItemOnPage));
+
+            $I->amGoingTo("compare quantities");
+            $I->assertEquals($shopItem->quantity, $this->grabShopItemQuantity($shopItemOnPage));
+
+            $I->amGoingTo("compare total prices");
+            $I->assertEquals($shopItem->getTotalPrice(), $this->grabShopItemTotalPrice($shopItemOnPage));
         }
 
-        $totalPrice = $this->cart->getTotalPrice();
-        if ($this->entity == self::FINISH_CART && $this->cart->discount > 0) {
-            // проверка скидки и всей цены со скидкой
-            $I->expectTo('see discount');
-            $I->assertEquals($I->grabIntFrom($this->discount), $this->cart->discount);
-        }
+//        $totalPrice = $this->cart->getTotalPrice();
+//        if ($this->entity == self::FINISH_CART && $this->cart->discount > 0) {
+//            // проверка скидки и всей цены со скидкой
+//            $I->expectTo('see discount');
+//            $I->assertEquals($I->grabIntFrom($this->discount), $this->cart->discount);
+//        }
         $I->amGoingTo('check total price');
         //TODO: На товар приходится погрешность ~2 руб на позицию. Когда будет исправлена проблема с округлением, это нужно будет исправить
-        $I->assertEqualsWithPermissibleLimitsOfErrors($I->grabIntFrom($this->totalPrice), $totalPrice, count($this->cart->shopItems) * 2);
+        $I->assertEqualsWithPermissibleLimitsOfErrors($this->grabTotalPrice(), $this->cart->getTotalPrice(), count($this->cart->shopItems) * 2);
     }
 }

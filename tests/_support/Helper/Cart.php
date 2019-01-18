@@ -66,4 +66,9 @@ class Cart
             $shopItem->setPrice($shopItem->getPrice() - ceil($discountInPercenets * $shopItem->getPrice() / 100));
         }
     }
+
+    public function getByName($name)
+    {
+        return $this->shopItems[$name];
+    }
 }

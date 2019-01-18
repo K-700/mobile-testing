@@ -42,9 +42,9 @@ class SearchPage
     public function checkFoundItems($regexp)
     {
         $I = $this->tester;
-        $shopItemPage = new ShopItemPage($I);
+        $shopItemPage = new ShopItemPage($I, ShopItemPage::ITEM_SEARCH);
 
-        $I->waitForElementVisible($shopItemPage->root, 20);
+        $I->waitForElementVisible($I->by($shopItemPage->root), 20);
         $foundShopItems = $I->findElementsBy($shopItemPage->root);
         $I->assertGreaterThanOrEqual(1, count($foundShopItems));
         $I->assertGreaterThanOrEqual(1, $I->grabIntFromString($I->by($this->foundItemsResultInfo)->text()));
@@ -56,7 +56,7 @@ class SearchPage
     public function checkNotFoundItems()
     {
         $I = $this->tester;
-        $shopItemPage = new ShopItemPage($I);
+        $shopItemPage = new ShopItemPage($I, ShopItemPage::ITEM_SEARCH);
 
         //TODO: waiForJS?
         sleep(10);

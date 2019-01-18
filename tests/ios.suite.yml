@@ -9,12 +9,14 @@ modules:
       host: 0.0.0.0
       port: 4723
       capabilities:
-        nativeWebTap: false
+        nativeWebTap: true
         browserName: 'Safari'
         platformName: 'iOS'
         platformVersion: '12.0'
-        deviceName: 'iPhone 8'
+        deviceName: 'iPhone XS'
         automationName: 'XCUITest'
-        connection_timeout: 360
-        request_timeout: 360
-        noReset: true
+        connection_timeout: 3600
+        request_timeout: 3600
+        newCommandTimeout: 120
+        launchTimeout: 180000
+        noReset: false

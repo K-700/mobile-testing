@@ -8,16 +8,17 @@ class Ios extends \Codeception\Module
     /**
      * @param array $data
      * @options {"required":["using","value"]}
-     * @return \PHPUnit_Extensions_Selenium2TestCase_Element
+     * @return \Appium\TestCase\Element|\PHPUnit_Extensions_Selenium2TestCase_Element
      */
     public function by($data)
     {
-        try {
+//        try {
             return $this->getModule('\Appium\AppiumDriver')->TestCaseElm()->by($data['using'], $data['value']);
-        } catch (ModuleException $e) {
-            // TODO: подумать как нормально обработать
-            // throw new SkippedTestError($e->getMessage());
-        }
+//        } catch (ModuleException $e) {
+//            codecept_debug('ModuleException');
+//            // TODO: подумать как нормально обработать
+//            // throw new SkippedTestError($e->getMessage());
+//        }
     }
 
     /**

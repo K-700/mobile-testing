@@ -1,22 +1,34 @@
 <?php
 
-use Page\CartPage;
 use Helper\Cart;
 use Page\Checkout\FullCartPage;
+use Page\HeaderPage;
 
-// TODO: этот тест практически полная копипаста теста LittleCartCest, за исключением того, что тестируется FullCartPage. Не знаю как их лучше объединить, поэтому пока так
 class FullCartCest
 {
     /** @var Cart */
     private $cart;
 
-    public function _before(AcceptanceTester $I)
+    public function _before(IosTester $I)
     {
-        $I->amOnPage('/shop/nails/gel-laki/');
+        $I->implicitWait(['ms' => 10000]);
+        $I->setUrl(['url' => 'http://test-site.com/shop/nails/gel-laki']);
+        $elem = $I->byCssSelector('.mobile-show');
+        $I->tap([[$elem->location()['x'], $elem->location()['y'] - 70]]);
+        sleep(5);
         $this->cart = $I->addRandomDifferentItemsToCart(3, 5);
-        $littleCart = new CartPage($I, CartPage::LITTLE_CART, $this->cart);
-        $I->moveMouseOver($littleCart->root);
-        $I->click($littleCart->goToCartButton, $littleCart->root);
+        // переход в корзину
+        $headerPage = new HeaderPage($I);
+        $oldUrl = $I->getRelativeUrl();
+        $I->by($headerPage->basketButton)->click();
+        // ждем пока изменится url (значит страница прогрузилась)
+        $I->waitForElementChange(
+            function () use ($I, $oldUrl) {
+                return $I->getRelativeUrl() == $oldUrl;
+            },
+        20
+        );
+
     }
 
     /**
@@ -24,24 +36,24 @@ class FullCartCest
      * Рандомно наполняется корзина, затем находится товар с активной кнопкой "+"
      * Для этого товара проверяются кнопки "+", "-" и "х"(удаление)
      *
-     * @param AcceptanceTester $I
+     * @param IosTester $I
      */
-    public function cartTest(AcceptanceTester $I)
+    public function cartTest(\IosTester $I)
     {
         $fullCartPage = new FullCartPage($I, $this->cart);
-        // TODO: предполагаем, что в корзине будет хоть 1 элемент, которого на складе 2шт, иначе тест сфейлится. Есть вариант через try-catch (обернуть findShopItemNameWithActiveButton), но выглядит так себе.
+        // TODO: предполагаем, что в корзине будет хоть 1 элемент, которого на складе 2шт, иначе тест скипнется.
         $fullCartPage->cartPage->checkItems();
 
         $I->amGoingTo("find item with active \"+\" button, add 1 to this item, then sub 1 and delete this item");
-        $shopItemName = $fullCartPage->cartPage->findShopItemNameWithActiveButton($fullCartPage->cartPage->addButton);
+        $shopItem = $fullCartPage->cartPage->findShopItemWithActiveAddButton();
 
-        $fullCartPage->cartPage->addItems($shopItemName, 1);
+        $fullCartPage->cartPage->addItems($shopItem, 2);
         $fullCartPage->cartPage->checkItems();
 
-        $fullCartPage->cartPage->subItems($shopItemName, 1);
+        $fullCartPage->cartPage->subItems($shopItem, 2);
         $fullCartPage->cartPage->checkItems();
 
-        $fullCartPage->cartPage->deleteItem($shopItemName);
+        $fullCartPage->cartPage->deleteItem($shopItem);
         $fullCartPage->cartPage->checkItems();
     }
 }

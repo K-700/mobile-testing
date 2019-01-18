@@ -26,16 +26,10 @@ class CacklePage
     {
         $I = $this->tester;
 
-        while ($I->by($this->nextCommentsButton)->displayed()) {
-//            * @options {"optional":["element","xoffset","yoffset"]}
-            $element = $I->findElement($this->nextCommentsButton);
-            $I->pauseExecution();
-            $I->moveTo(["element" => $element["ELEMENT"], "xoffset" => "0", "yoffset" => "-70"]);
-            $I->pauseExecution();
-            $I->by($this->nextCommentsButton)->click();
-            // TODO: возможно стоит завязаться не просто на ожидание некоторого количества времени, но пока не придумала ничего лучше
-//            $I->pauseExecution();
-            sleep(2);
+        $nextCommentsButton = $I->by($this->nextCommentsButton);
+        while ($nextCommentsButton->displayed()) {
+            $I->verticalSwipeToElement($nextCommentsButton);
+            $nextCommentsButton->click();
         }
     }
 

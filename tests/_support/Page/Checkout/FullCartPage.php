@@ -23,6 +23,6 @@ class FullCartPage
 
         $this->URL = '/shop/cart/';
         $this->cartPage = new CartPage($I, CartPage::CART, $cart);
-        $this->goToCheckoutButton = 'Перейти к оформлению заказа';
+        $this->goToCheckoutButton = ["using" => "class name", "value" => "to-checkout-button"];
     }
 }
