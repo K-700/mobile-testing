@@ -5,13 +5,8 @@ use Page\ShopItem\ShopItemPage;
 
 class SearchPage
 {
+    /** @var \IosTester  */
     protected $tester;
-
-    private $openInputFieldButton;
-
-    private $queryField;
-
-    private $searchButton;
 
     private $foundItemsResultInfo;
 
@@ -21,22 +16,8 @@ class SearchPage
     {
         $this->tester = $I;
 
-        $this->openInputFieldButton = ["using" => "class name", "value" => "header__search"];
-        $this->queryField = ["using" => "xpath", "value" => "//form[@class='search-small-form']//input"];
-        $this->searchButton = ["using" => "xpath", "value" => "//form[@class='search-small-form']//button[@class='search-button']"];
         $this->foundItemsResultInfo = ["using" => "xpath", "value" => "//div[@class='search-page-info-result']"];
         $this->infoSuggestion = ["using" => "class name", "value" => "search-page-info-suggestion"];
-    }
-
-    public function searchByRequest($request)
-    {
-        $I = $this->tester;
-
-        codecept_debug($this->openInputFieldButton);
-//        $this->openInputFieldButton->click();
-        $I->pauseExecution();
-        $I->by($this->queryField)->value($request);
-        $I->by($this->searchButton)->click();
     }
 
     public function checkFoundItems($regexp)
@@ -44,7 +25,9 @@ class SearchPage
         $I = $this->tester;
         $shopItemPage = new ShopItemPage($I, ShopItemPage::ITEM_SEARCH);
 
-        $I->waitForElementVisible($I->by($shopItemPage->root), 20);
+        // by() ждет появления хотя-бы одного найденного товара, тогда как findElementsBy() не делает этого
+        // если убрать строку ниже, то всегда будет найдено 0 товаров, по мне, так это лучше, чем sleep()
+        $I->by($shopItemPage->root);
         $foundShopItems = $I->findElementsBy($shopItemPage->root);
         $I->assertGreaterThanOrEqual(1, count($foundShopItems));
         $I->assertGreaterThanOrEqual(1, $I->grabIntFromString($I->by($this->foundItemsResultInfo)->text()));
@@ -58,8 +41,7 @@ class SearchPage
         $I = $this->tester;
         $shopItemPage = new ShopItemPage($I, ShopItemPage::ITEM_SEARCH);
 
-        //TODO: waiForJS?
-        sleep(10);
+        sleep(15);
         $numberOfFoundShopItems = count($I->findElementsBy($shopItemPage->root));
         $totalNumberOfFoundItems = $I->grabIntFromString($I->by($this->foundItemsResultInfo)->text());
         $I->assertEquals(0, $numberOfFoundShopItems);
