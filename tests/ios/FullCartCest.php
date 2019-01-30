@@ -1,34 +1,22 @@
 <?php
 
-use Helper\Cart;
+use Helper\CartHelper;
 use Page\Checkout\FullCartPage;
 use Page\HeaderPage;
 
 class FullCartCest
 {
-    /** @var Cart */
+    /** @var CartHelper */
     private $cart;
 
     public function _before(IosTester $I)
     {
-        $I->implicitWait(['ms' => 10000]);
         $I->setUrl(['url' => 'http://test-site.com/shop/nails/gel-laki']);
-        $elem = $I->byCssSelector('.mobile-show');
-        $I->tap([[$elem->location()['x'], $elem->location()['y'] - 70]]);
         sleep(5);
         $this->cart = $I->addRandomDifferentItemsToCart(3, 5);
-        // переход в корзину
-        $headerPage = new HeaderPage($I);
-        $oldUrl = $I->getRelativeUrl();
-        $I->by($headerPage->basketButton)->click();
-        // ждем пока изменится url (значит страница прогрузилась)
-        $I->waitForElementChange(
-            function () use ($I, $oldUrl) {
-                return $I->getRelativeUrl() == $oldUrl;
-            },
-        20
-        );
 
+        $headerPage = new HeaderPage($I);
+        $headerPage->goToCart();
     }
 
     /**
@@ -37,6 +25,7 @@ class FullCartCest
      * Для этого товара проверяются кнопки "+", "-" и "х"(удаление)
      *
      * @param IosTester $I
+     * @group restartSession
      */
     public function cartTest(\IosTester $I)
     {

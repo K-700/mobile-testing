@@ -1,8 +1,9 @@
 <?php
 namespace Page\ShopItem;
 
-use Helper\Cart;
-use Helper\ShopItem;
+use Helper\CartHelper;
+use Helper\ShopItemHelper;
+use Page\HeaderPage;
 use Page\ItemIsOutOfStockPage;
 
 class ShopItemPage
@@ -12,6 +13,9 @@ class ShopItemPage
     /** Entity constants */
     const ITEM = 1;
     const ITEM_SEARCH = 2;
+    const ITEM_RETAIL_ROCKET = 3;
+
+    protected $entity;
 
     public $root;
 
@@ -30,6 +34,7 @@ class ShopItemPage
     public function __construct(\IosTester $I, $constEntity = self::ITEM)
     {
         $this->tester = $I;
+        $this->entity = $constEntity;
         $this->outOfStockMessage = 'Сообщить о поступлении';
 
         switch ($constEntity) {
@@ -48,6 +53,12 @@ class ShopItemPage
                 $this->price = ["using" => "class name", "value" => "price"];
                 $this->addToCartButton = ["using" => "class name", "value" => "put-item-button"];
                 $this->root = ["using" => "class name", "value" => "shop_item"];
+                break;
+            case self::ITEM_RETAIL_ROCKET:
+                $this->photo = ["using" => "class name", "value" => "item-image"];
+                $this->name = ["using" => "class name", "value" => "item-title"];
+                $this->price = ["using" => "class name", "value" => "item-price-value"];
+                $this->root = ["using" => "class name", "value" => "item"];
                 break;
         }
     }
@@ -71,7 +82,7 @@ class ShopItemPage
     {
         $I = $this->tester;
 
-        return (int)$I->findElementFromElementBy($shopItem, $this->price)->text();
+        return $I->grabIntFromString($I->findElementFromElementBy($shopItem, $this->price)->text());
     }
 
     /**
@@ -87,7 +98,18 @@ class ShopItemPage
 
     /**
      * @param \Appium\TestCase\Element|\PHPUnit_Extensions_Selenium2TestCase_Element $shopItem
-     * @param Cart $cart
+     * @return bool
+     */
+    public function isItemOutOfStock($shopItem)
+    {
+        $I = $this->tester;
+
+        return $I->findElementFromElementBy($shopItem, $this->addToCartButton)->text() == $this->outOfStockMessage;
+    }
+
+    /**
+     * @param \Appium\TestCase\Element|\PHPUnit_Extensions_Selenium2TestCase_Element $shopItem
+     * @param CartHelper $cart
      * @return bool Item added successfully
      */
     public function addToCart($shopItem, &$cart)
@@ -104,8 +126,51 @@ class ShopItemPage
             $itemIsOutOfStockPage->closeWindow();
             return false;
         }
-        $cart->addItems(new ShopItem($this->grabName($shopItem), $this->grabPrice($shopItem)));
+        $cart->addItems(new ShopItemHelper($this->grabName($shopItem), $this->grabPrice($shopItem)));
 
         return true;
+    }
+
+    /**
+     * Returns first item on the page which is not out of stock
+     * @return \Appium\TestCase\Element|\PHPUnit_Extensions_Selenium2TestCase_Element
+     */
+    public function getFirstPresentItem()
+    {
+        $I = $this->tester;
+
+        $items = $I->findElements($this->root);
+        if (count($items) == 0) {
+            $I->fail("There are no shop items on page");
+        }
+
+        $items = array_filter(
+            $I->findElements($this->root),
+            function ($element) {
+                $this->isItemOutOfStock($element);
+            }
+        );
+
+        if (count($items) == 0) {
+            $I->skip("There are no present shop items on page");
+        }
+
+        return $items[0];
+    }
+
+    /**
+     * Переход на страницу, содержащую карточку товара для текущего объекта
+     */
+    public function goToPageWithCurrentItem()
+    {
+        $I = $this->tester;
+
+        $headerPage = new HeaderPage($I);
+        if ($this->entity == self::ITEM) {
+            $I->setUrl(['url' => 'http://test-site.com/shop/nails/gel-laki']);
+        } elseif ($this->entity == self::ITEM_SEARCH) {
+            // тут должен быть запрос, на который обязательно найдется хоть 1 товар
+            $headerPage->searchByRequest('синий');
+        }
     }
 }

@@ -8,7 +8,10 @@ modules:
     \Appium\AppiumDriver:
       host: 0.0.0.0
       port: 4723
+      url: 'http://test-site.com'
       capabilities:
+#        выкидывает ошибку с этим capability
+#        safariInitialUrl: 'http://test-site.com'
         nativeWebTap: true
         browserName: 'Safari'
         platformName: 'iOS'
@@ -20,3 +23,5 @@ modules:
         newCommandTimeout: 120
         launchTimeout: 180000
         noReset: false
+extensions:
+  enabled: [Extension\IosExtension, Group\RestartSession]

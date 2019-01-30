@@ -2,7 +2,7 @@
 
 namespace Page\Checkout;
 
-use Helper\Cart;
+use Helper\CartHelper;
 use Page\CartPage;
 
 class FullCartPage
@@ -17,7 +17,7 @@ class FullCartPage
 
     public $goToCheckoutButton;
 
-    public function __construct(\IosTester $I, Cart $cart)
+    public function __construct(\IosTester $I, CartHelper $cart)
     {
         $this->tester = $I;
 

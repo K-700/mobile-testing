@@ -1,7 +1,8 @@
 <?php
 
+use Codeception\Exception\ElementNotFound;
 use Facebook\WebDriver\Exception\TimeOutException;
-use Helper\Cart;
+use Helper\CartHelper;
 use Page\HeaderPage;
 use Page\ShopItem\ShopItemPage;
 
@@ -74,6 +75,18 @@ class IosTester extends \Codeception\Actor
     /**
      * @param array $data
      * @options {"required":["using","value"]}
+     * @return \Appium\TestCase\Element|\PHPUnit_Extensions_Selenium2TestCase_Element
+     */
+    public function findVisibleBy($data)
+    {
+        return $this->findElementsBy($data)[0];
+    }
+
+    /**
+     * Returns displayed elements
+     *
+     * @param array $data
+     * @options {"required":["using","value"]}
      * @return \Appium\TestCase\Element|\PHPUnit_Extensions_Selenium2TestCase_Element[]
      */
     public function findElementsBy($data)
@@ -84,9 +97,10 @@ class IosTester extends \Codeception\Actor
             return $this->elementDisplayed($webElement['ELEMENT']);
         });
 
-        return array_map(function($webElement) {
+        //array_values для перестроения ключей
+        return array_values(array_map(function($webElement) {
             return $this->elementFromResponseValue($webElement);
-        }, $elements);
+        }, $elements));
     }
 
     /**
@@ -104,6 +118,17 @@ class IosTester extends \Codeception\Actor
      * @param \Appium\TestCase\Element|\PHPUnit_Extensions_Selenium2TestCase_Element $parentElement
      * @param $childData
      * @options {"required":["using","value"]}
+     * @return \Appium\TestCase\Element|\PHPUnit_Extensions_Selenium2TestCase_Element
+     */
+    public function findVisibleElementFromElementBy($parentElement, $childData)
+    {
+        return $this->findElementsFromElementBy($parentElement, $childData)[0];
+    }
+
+    /**
+     * @param \Appium\TestCase\Element|\PHPUnit_Extensions_Selenium2TestCase_Element $parentElement
+     * @param $childData
+     * @options {"required":["using","value"]}
      * @return \Appium\TestCase\Element|\PHPUnit_Extensions_Selenium2TestCase_Element[]
      */
     public function findElementsFromElementBy($parentElement, $childData)
@@ -114,22 +139,28 @@ class IosTester extends \Codeception\Actor
             return $this->elementDisplayed($webElement['ELEMENT']);
         });
 
-        return array_map(function($webElement) {
+        //array_values для перестроения ключей
+        return array_values(array_map(function($webElement) {
             return $this->elementFromResponseValue($webElement);
-        }, $elements);
-    }
-
-    public function seeIAmOnUrl($relativeUrl) {
-        $this->assertEquals($relativeUrl, $this->getRelativeUrl());
+        }, $elements));
     }
 
     /**
-     * @param string $text
-     * @param \PHPUnit_Extensions_Selenium2TestCase_Element $container
+     * @param array $data
+     * @options {"required":["using","value"]}
+     * @return PHPUnit_Extensions_Selenium2TestCase_Element
      */
-    public function see($text, $container) {
-        $this->assertRegExp("/$text/iu", $container->text());
+    public function byDisplayed($data)
+    {
+        foreach ($this->findElementsBy($data) as $element) {
+            if ($element->displayed()) {
+                return $element;
+            }
+        }
+
+        throw new ElementNotFound($data['value']);
     }
+
     /**
      * @param Closure $closure
      * @param int $timeout
@@ -149,7 +180,7 @@ class IosTester extends \Codeception\Actor
      * @param $timeout
      * @param string $message
      */
-    public function waitForElementVisible($element, $timeout, $message = '')
+    public function waitForElementVisible($element, $timeout = 10, $message = '')
     {
         $this->until(
             function () use ($element) {
@@ -158,6 +189,106 @@ class IosTester extends \Codeception\Actor
             $message,
             $timeout
         );
+    }
+
+    /**
+     * @param \Appium\TestCase\Element|\PHPUnit_Extensions_Selenium2TestCase_Element $element
+     * @param $timeout
+     * @param string $message
+     */
+    public function waitForElementNotVisible($element, $timeout = 10, $message = '')
+    {
+        $this->until(
+            function () use ($element) {
+                return !$element->displayed();
+            },
+            $message,
+            $timeout
+        );
+    }
+
+    /**
+     * @param PHPUnit_Extensions_Selenium2TestCase_Element $element
+     */
+    public function seeElement($element)
+    {
+        $this->assertTrue($element->displayed());
+    }
+
+    /**
+     * @param array $data
+     * @options {"required":["using","value"]}
+     */
+    public function dontSeeElementBy($data)
+    {
+        $I = $this;
+
+        try {
+            $I->assertFalse($I->findBy($data)->displayed());
+        } catch(PHPUnit_Extensions_Selenium2TestCase_WebDriverException $e) {
+            if ($e->getCode() != PHPUnit_Extensions_Selenium2TestCase_WebDriverException::NoSuchElement) {
+                throw $e;
+            }
+        }
+    }
+
+    /**
+     * @param PHPUnit_Extensions_Selenium2TestCase_Element $select
+     * @param string $option
+     * @throws NoSuchElementException
+     */
+    public function selectOption($select, $option)
+    {
+        $select->click();
+        $options = $this->findElementsFromElementBy($select, $this->byXPath('option'));
+        foreach ($options as $selectOption) {
+            if ($selectOption->text() == $option) {
+                $selectOption->click();
+            }
+        }
+
+        throw new NoSuchElementException("Option '$option' not found in '{$select->getId()}'");
+    }
+
+    /**
+     * Check that date matches pattern
+     *
+     * @param string $date
+     */
+    public function assertDateFormat($date)
+    {
+        $this->assertRegExp('/^(3[01]|[12][0-9]|0?[1-9])\.(1[012]|0?[1-9])\.((?:19|20)\d{2})|Вчера|Сегодня$/ui', $date);
+    }
+
+    /**
+     * @param string $text
+     * @param \PHPUnit_Extensions_Selenium2TestCase_Element $container
+     */
+    public function see($text, $container) {
+        $this->assertContains($text, $container->text());
+    }
+
+    /**
+     * @param string $text
+     * @param \PHPUnit_Extensions_Selenium2TestCase_Element $container
+     */
+    public function dontSee($text, $container)
+    {
+        $this->assertNotRegExp("/$text/u", $container->text());
+    }
+
+    /**
+     * @param string $relativeUrl
+     */
+    public function seeIAmOnUrl($relativeUrl) {
+        $this->assertEquals($relativeUrl, $this->getRelativeUrl());
+    }
+
+    /**
+     * @param \Appium\TestCase\Element|\PHPUnit_Extensions_Selenium2TestCase_Element $checkbox
+     */
+    public function seeCheckboxIsChecked($checkbox) {
+        $this->assertTrue($checkbox->selected());
     }
 
     /**
@@ -178,21 +309,20 @@ class IosTester extends \Codeception\Actor
         Codeception\Util\Debug::pause();
     }
 
-    public function grabIntFromString($string)
-    {
-        $string = preg_replace("/\D+/i", "", $string);
-        // удаление thinsp
-        return (int)preg_replace("/&#?[a-z0-9]{2,8};/i", "", $string);
-    }
-
+    /**
+     *  Randomly open shop item on page
+     */
     public function openRandomProductCard()
     {
         $I = $this;
         $shopItemPage = new ShopItemPage($I);
 
-        $I->waitForElementVisible($I->by($shopItemPage->root), 20);
+        $I->findBy($shopItemPage->root);
         $items = $I->findElementsBy($shopItemPage->root);
-        $items[rand(1, count($items))]->click();
+        $itemName = $I->findElementFromElementBy($items[rand(1, count($items))], $shopItemPage->name);
+        codecept_debug($itemName->text());
+        $I->verticalSwipeToElement($itemName);
+        $itemName->click();
     }
 
     /**
@@ -210,45 +340,19 @@ class IosTester extends \Codeception\Actor
         $this->assertTrue(abs($expected - $actual) <= $error);
     }
 
-    public function verticalSwipeToElement(PHPUnit_Extensions_Selenium2TestCase_Element $element)
-    {
-        if ($element->displayed() && ($element->location()['y'] <= 0)) {
-            // Зачем тут нужен свайп? Дело в том, что при вызове функции location() драйвер находит элемент на странице,
-            // но выходит так, что этот элемент оказывается под шапкой страницы, и, соответственно, клик до него не доходит
-            // этим свайпом элемент выдвигается из-под шапки
-            $this->swipe(0, 100, 0, 350);
-            sleep(2);
-        }
-    }
-
-    public function incomplete($message = '')
-    {
-        $this->getScenario()->incomplete($message);
-    }
-
-    public function skip($message = '')
-    {
-        $this->getScenario()->skip($message);
-    }
-
-    public function getRelativeUrl()
-    {
-        return parse_url($this->getUrl(), PHP_URL_PATH);
-    }
-
     /**
      * Add random elements and return array of these elements
      *
      * @param int numberToAdd Number of elements to add
      * @param int maxQuantity Randomly increase number of added items in cart from 1 to maxQuantity
-     * @return Cart
+     * @return CartHelper
      */
     public function addRandomDifferentItemsToCart($numberToAdd = 5, $maxQuantity = 1)
     {
         $I = $this;
         $shopItemPage = new ShopItemPage($I);
-        $cart = new Cart();
-        $totalQuantityCircle = $I->by((new HeaderPage($I))->totalQuantityCircle);
+        $cart = new CartHelper();
+        $totalQuantityCircle = $I->findBy((new HeaderPage($I))->totalQuantityCircle);
 
         $I->amGoingTo("add {$numberToAdd} random different items to cart");
         $shopItems = $I->findElementsBy($shopItemPage->root);
@@ -279,5 +383,97 @@ class IosTester extends \Codeception\Actor
         }
 
         return $cart;
+    }
+
+    /**
+     * Вертикальный свайп до элемента
+     *
+     * Зачем в функции нужен свайп? Дело в том, что при вызове функции location() драйвер находит элемент на странице,
+     * но выходит так, что этот элемент оказывается в самом верху страницы, под шапкой, и, соответственно, клик до него
+     * не доходит. Этим свайпом элемент выдвигается из-под шапки и становится кликабелен
+     * @param PHPUnit_Extensions_Selenium2TestCase_Element $element
+     * @param int $offsetX
+     * @param int $offsetY
+     */
+    public function verticalSwipeToElement($element, $offsetX = 0, $offsetY = 0)
+    {
+        if ($element->displayed()) {
+            if ($element->location()['y'] <= 200) {
+                $this->swipe(0, 100, 0 + $offsetX, 300 - $element->location()['y'] + $offsetY);
+                sleep(2);
+            } elseif ($element->location()['y'] >= 200) {
+//                codecept_debug($element->text());
+//                $this->pauseExecution();
+                $this->swipe(0, $element->location()['y'], 0, 200);
+//                codecept_debug($element->location()['y']);
+//                $this->pauseExecution();
+            }
+        }
+    }
+
+    /**
+     * Opens the page for the given relative URL
+     *
+     * @param string $relativeUrl
+     */
+    public function amOnPage($relativeUrl)
+    {
+        $I = $this;
+
+        $I->setUrl(['url' => $I->getUrl() . $relativeUrl]);
+    }
+
+    /**
+     * @param string $oldUrl
+     */
+    public function waitUrlChange($oldUrl)
+    {
+        $I = $this;
+
+        // ждем пока изменится url (значит страница прогрузилась)
+        $I->waitForElementChange(
+            function () use ($I, $oldUrl) {
+                return $I->getRelativeUrl() == $oldUrl;
+            },
+            20
+        );
+    }
+
+    /**
+     * Delete all non-numbers from given string and cast it to integer
+     *
+     * @param string $string
+     * @return int
+     */
+    public function grabIntFromString($string)
+    {
+        $string = preg_replace("/\D+/i", "", $string);
+        // удаление thinsp
+        return (int)preg_replace("/&#?[a-z0-9]{2,8};/i", "", $string);
+    }
+
+    /**
+     * Marks a test as incomplete
+     *
+     * @param string $message
+     */
+    public function incomplete($message = '')
+    {
+        $this->getScenario()->incomplete($message);
+    }
+
+    /**
+     * Marks a test as skip
+     *
+     * @param string $message
+     */
+    public function skip($message = '')
+    {
+        $this->getScenario()->skip($message);
+    }
+
+    public function getRelativeUrl()
+    {
+        return parse_url($this->getUrl(), PHP_URL_PATH);
     }
 }

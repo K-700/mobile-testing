@@ -2,8 +2,8 @@
 namespace Page\ShopItem;
 
 use Exception\ItemIsOutOfStockException;
-use Helper\Cart;
-use Helper\ShopItem;
+use Helper\CartHelper;
+use Helper\ShopItemHelper;
 use Page\CacklePage;
 
 class ShopItemCardPage
@@ -97,7 +97,7 @@ class ShopItemCardPage
     {
         $I = $this->tester;
 
-        $addToQuantityButton = $I->by($this->addToQuantityButton);
+        $addToQuantityButton = $I->findBy($this->addToQuantityButton);
         $I->verticalSwipeToElement($addToQuantityButton);
         $addToQuantityButton->click();
     }
@@ -106,7 +106,7 @@ class ShopItemCardPage
     {
         $I = $this->tester;
 
-        $subFromQuantityButton = $I->by($this->subFromQuantityButton);
+        $subFromQuantityButton = $I->findBy($this->subFromQuantityButton);
         $I->verticalSwipeToElement($subFromQuantityButton);
         $subFromQuantityButton->click();
     }
@@ -115,16 +115,15 @@ class ShopItemCardPage
     {
         $I = $this->tester;
 
-        $quantity = $I->by($this->quantity);
-        $I->verticalSwipeToElement($quantity);
-        return (int)$quantity->value();
+        $I->verticalSwipeToElement($I->findBy($this->quantity));
+        return (int)$I->findBy($this->quantity)->value();
     }
 
     public function grabPrice()
     {
         $I = $this->tester;
 
-        return (int)$I->by($this->price)->text();
+        return (int)$I->findBy($this->price)->text();
     }
 
     /**
@@ -136,7 +135,8 @@ class ShopItemCardPage
     {
         $I = $this->tester;
 
-        $quantity = $I->by($this->quantity);
+        $quantity = $I->findBy($this->quantity);
+        $I->verticalSwipeToElement($quantity);
         $quantity->click();
         $quantity->clear();
         // Стираем 1 которая уже есть в поле
@@ -148,24 +148,24 @@ class ShopItemCardPage
      * Ввод количества товара напрямую в поле количества и добавление этого товара в корзину
      *
      * @param int $numberToAdd Сколько товара необходимо добавить в корзину
-     * @param Cart|null $cart Ссылка на карточку с товарами
+     * @param CartHelper|null $cart Ссылка на карточку с товарами
      */
-    public function addItemsToCart($numberToAdd, Cart &$cart = null)
+    public function addItemsToCart($numberToAdd, CartHelper &$cart = null)
     {
         $I = $this->tester;
 
         $this->inputQuantity($numberToAdd);
-        $I->by($this->addToCartButton)->click();
+        $I->findBy($this->addToCartButton)->click();
         try {
-            if ($I->by($this->addToCartButton)->text() == 'Сообщить о поступлении') {
-                throw new ItemIsOutOfStockException(new ShopItem($I->by($this->name)->text(), $this->grabPrice()));
+            if ($I->findBy($this->addToCartButton)->text() == 'Сообщить о поступлении') {
+                throw new ItemIsOutOfStockException(new ShopItemHelper($I->findBy($this->name)->text(), $this->grabPrice()));
             }
         } catch (ItemIsOutOfStockException $e) {
             $I->incomplete($e->getMessage());
         }
         // добавляем товар в карточку только если он остался на складе (не было исключения)
         if (!is_null($cart)) {
-            $cart->addItems(new ShopItem($I->by($this->name)->text(), $this->grabPrice()), $this->grabQuantity());
+            $cart->addItems(new ShopItemHelper($I->findBy($this->name)->text(), $this->grabPrice()), $this->grabQuantity());
         }
     }
 }

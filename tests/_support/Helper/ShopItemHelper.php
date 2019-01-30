@@ -2,7 +2,7 @@
 
 namespace Helper;
 
-class ShopItem
+class ShopItemHelper
 {
     private $name;
 

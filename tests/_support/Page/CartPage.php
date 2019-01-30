@@ -3,15 +3,15 @@ namespace Page;
 
 use Exception\ItemIsOutOfStockException;
 use Facebook\WebDriver\Exception\ElementNotVisibleException;
-use Helper\Cart;
-use Helper\ShopItem;
+use Helper\CartHelper;
+use Helper\ShopItemHelper;
 
 class CartPage
 {
     /** Entity constants */
     const CART = 1;
-//    const CHECKOUT_CART = 3;
-//    const FINISH_CART = 4;
+    const CHECKOUT_CART = 2;
+    const FINISH_CART = 3;
 
     protected $url;
 
@@ -21,15 +21,13 @@ class CartPage
     /** @var string Name of entity */
     protected $entity;
 
-    /** @var Cart */
+    /** @var CartHelper */
     public $cart;
 
     /** @var string Root locator */
     public $root;
 
     public $table;
-
-//    public $tableHeaders;
 
     public $shopItemRoot;
     public $shopItemName;
@@ -43,8 +41,8 @@ class CartPage
     public $addButton;
     public $subButton;
     public $deleteButton;
-//    /** finish cart */
-//    public $discount;
+    /** finish cart */
+    public $discount;
 
     public function __construct(\IosTester $I, $constEntity, $cart = null)
     {
@@ -52,80 +50,103 @@ class CartPage
         $this->cart = $cart;
         $this->entity = $constEntity;
 
-        // TODO: ВНИМАНИЕ! Если изменятся локаторы на этой странице, то нужно не забыть поменять их в функциях getShopItemAddButton и getShopItemSubButton
-//        $this->shopItemRoot = ['using' => 'class name', 'value' => 'shop-cart-item-data'];
-        $this->shopItemRoot = ['using' => 'xpath', 'value' => "//tr[@class='shop-cart-item-data']"];
-        $this->shopItemName = ['using' => 'class name', 'value' => 'cart_table_name'];
-        $this->shopItemPrice = ['using' => 'class name', 'value' => 'cart_table_price'];
-        $this->shopItemQuantity = ['using' => 'class name', 'value' => 'cart_table_quantity'];
-        $this->shopItemTotalPrice = ['using' => 'class name', 'value' => 'cart_table_summary'];
-        $this->deleteButton = ['using' => 'class name', 'value' => 'imk-icon-close'];
-        //addButton subButton должны быть в xpath для функции findShopItemNameWithActiveButton
-        $this->addButton = ['using' => 'xpath', 'value' => "//span[@class='circle-button' and contains(text(), '+')]"];
-        $this->subButton = ['using' => 'xpath', 'value' => "//span[@class='circle-button' and contains(text(), '-')]"];
-        $this->totalPrice = ['using' => 'id', 'value' => 'order-price'];
-
         switch ($constEntity) {
             case self::CART:
+                // TODO: !!! Если изменятся локаторы на этой странице, то нужно не забыть поменять их в функциях getShopItemAddButton и getShopItemSubButton !!!
+                $this->url = '/shop/cart/';
                 $this->root = ['using' => 'id', 'value' => 'carttbl'];
                 $this->table = ['using' => 'class name', 'value' => 'full-cart-table'];
-                $this->url = '/shop/cart/';
+                $this->shopItemRoot = ['using' => 'xpath', 'value' => "//tr[@class='shop-cart-item-data']"];
+                $this->shopItemName = ['using' => 'class name', 'value' => 'cart_table_name'];
+                $this->shopItemQuantity = ['using' => 'class name', 'value' => 'cart_table_quantity'];
+                $this->shopItemPrice = ['using' => 'class name', 'value' => 'cart_table_price'];
+                $this->shopItemTotalPrice = ['using' => 'class name', 'value' => 'cart_table_summary'];
+                $this->totalPrice = ['using' => 'id', 'value' => 'order-price'];
+                $this->deleteButton = ['using' => 'class name', 'value' => 'imk-icon-close'];
+                //addButton subButton должны быть в xpath для функции findShopItemNameWithActiveButton
+                $this->addButton = ['using' => 'xpath', 'value' => "//span[@class='circle-button' and contains(text(), '+')]"];
+                $this->subButton = ['using' => 'xpath', 'value' => "//span[@class='circle-button' and contains(text(), '-')]"];
                 break;
-//            case self::CHECKOUT_CART:
-//                $this->root = Locator::find('div', ['class' => 'cart-final-block']);
-//                $this->table = Locator::find('table', ['class' => 'shop_cart_table all_cart_table_shop checkout-cart-table']);
-//                $this->totalPrice = Locator::toXPath('#order-price');
-//                break;
-//            case self::FINISH_CART:
-//                $this->root = Locator::find('div', ['class' => 'print-area']);
-//                $this->table = $this->root . Locator::find('table', ['class' => 'shop_cart_table']);
-//                $this->totalPrice = Locator::elementAt(Locator::contains('td', 'Итого') . '/ancestor::tr//td', 3);
-//                $this->discount = Locator::elementAt(Locator::contains('td', 'скидка') . '/ancestor::tr//td', 3);
-//                break;
+            case self::CHECKOUT_CART:
+                $this->root = ['using' => 'class name', 'value' => 'cart-final-block'];
+                $this->table = ['using' => 'class name', 'value' => 'checkout-cart-table'];
+                $this->shopItemRoot = ['using' => 'xpath', 'value' => "//tbody/tr[@id]"];
+                $this->shopItemName = ['using' => 'class name', 'value' => "checkout-cart-table-name"];
+                $this->shopItemQuantity = ['using' => 'class name', 'value' => 'checkout-cart-table-quantity'];
+                $this->shopItemTotalPrice = ['using' => 'class name', 'value' => 'checkout-cart-table-price'];
+                $this->totalPrice = ['using' => 'id', 'value' => 'order-price'];
+                break;
+            case self::FINISH_CART:
+                $this->root = ['using' => 'class name', 'value' => 'cart-final-block'];
+                $this->table = ['using' => 'class name', 'value' => 'shop_cart_table'];
+                $this->shopItemRoot = ['using' => 'xpath', 'value' => "//tr[@class='shop-cart-item-data']"];
+                $this->shopItemName = ['using' => 'xpath', 'value' => '/td[1]'];
+                $this->shopItemQuantity = ['using' => 'xpath', 'value' => '/td[3]'];
+                $this->shopItemTotalPrice = ['using' => 'xpath', 'value' => '/td[4]'];
+                $this->totalPrice = ['using' => 'xpath', 'value' => "//div[@class='cart-final-block']//*[contains(text(), 'Итого')]/ancestor::tr[@class='total']"];
+                $this->discount = ['using' => 'xpath', 'value' => "//*[contains(text(), 'скидка')]/ancestor:: tr[@class='total']"];
+                break;
         }
     }
 
-    public function grabShopItemName($shopItem)
+    /**
+     * @param \Appium\TestCase\Element|\PHPUnit_Extensions_Selenium2TestCase_Element $shopItem
+     * @return int Item's name
+     */
+    private function grabShopItemName($shopItem)
     {
         $I = $this->tester;
 
-        $shopItemName = $I->findElementFromElementBy($shopItem, $this->shopItemName);
+        $shopItemName = $I->findVisibleElementFromElementBy($shopItem, $this->shopItemName);
         $I->verticalSwipeToElement($shopItemName);
         return $shopItemName->text();
     }
 
-    public function grabShopItemPrice(\PHPUnit_Extensions_Selenium2TestCase_Element $shopItem)
+    /**
+     * @param \Appium\TestCase\Element|\PHPUnit_Extensions_Selenium2TestCase_Element $shopItem
+     * @return int Item's price
+     */
+    private function grabShopItemPrice($shopItem)
     {
         $I = $this->tester;
 
-        $shopItemPrice = $I->findElementFromElementBy($shopItem, $this->shopItemPrice);
+        $shopItemPrice = $I->findVisibleElementFromElementBy($shopItem, $this->shopItemPrice);
         $I->verticalSwipeToElement($shopItemPrice);
-        if ($I->grabIntFromString($shopItemPrice->text() == 1)) {
-            codecept_debug($shopItemPrice->text());
-            $I->pauseExecution();
-        }
         return $I->grabIntFromString($shopItemPrice->text());
     }
 
-    public function grabShopItemQuantity(\PHPUnit_Extensions_Selenium2TestCase_Element $shopItem)
+    /**
+     * @param \Appium\TestCase\Element|\PHPUnit_Extensions_Selenium2TestCase_Element $shopItem
+     * @return int Item's quantity
+     */
+    private function grabShopItemQuantity($shopItem)
     {
         $I = $this->tester;
 
-        return $I->grabIntFromString($I->findElementFromElementBy($shopItem, $this->shopItemQuantity)->text());
+        return $I->grabIntFromString($I->findVisibleElementFromElementBy($shopItem, $this->shopItemQuantity)->text());
     }
 
-    public function grabShopItemTotalPrice(\PHPUnit_Extensions_Selenium2TestCase_Element $shopItem)
+    /**
+     * @param \Appium\TestCase\Element|\PHPUnit_Extensions_Selenium2TestCase_Element $shopItem
+     * @return int Item's total price (quantity * price)
+     */
+    private function grabShopItemTotalPrice($shopItem)
     {
         $I = $this->tester;
 
-        return $I->grabIntFromString($I->findElementFromElementBy($shopItem, $this->shopItemTotalPrice)->text());
+        return $I->grabIntFromString($I->findVisibleElementFromElementBy($shopItem, $this->shopItemTotalPrice)->text());
     }
 
+    /**
+     * @return int Price of all items in cart
+     */
     public function grabTotalPrice()
     {
         $I = $this->tester;
 
-        return $I->grabIntFromString($I->by($this->totalPrice)->text());
+        $totalPrice = $I->findVisibleElementFromElementBy($I->findBy($this->root), $this->totalPrice);
+        $I->verticalSwipeToElement($totalPrice);
+        return $I->grabIntFromString($totalPrice->text());
     }
 
     /**
@@ -146,7 +167,7 @@ class CartPage
         $I = $this->tester;
 
         $name = $this->grabShopItemName($shopItem);
-        return $I->by(["using" => "xpath", "value" => "//*[@id='carttbl']//a[contains(text(), '$name')]/ancestor::tr[@class='shop-cart-item-data']{$this->addButton['value']}"]);
+        return $I->findBy(["using" => "xpath", "value" => "//*[@id='carttbl']//a[contains(text(), '$name')]/ancestor::tr[@class='shop-cart-item-data']{$this->addButton['value']}"]);
     }
 
     /**
@@ -167,7 +188,7 @@ class CartPage
         $I = $this->tester;
 
         $name = $this->grabShopItemName($shopItem);
-        return $I->by(["using" => "xpath", "value" => "//*[@id='carttbl']//a[contains(text(), '$name')]/ancestor::tr[@class='shop-cart-item-data']{$this->subButton['value']}"]);
+        return $I->findBy(["using" => "xpath", "value" => "//*[@id='carttbl']//a[contains(text(), '$name')]/ancestor::tr[@class='shop-cart-item-data']{$this->subButton['value']}"]);
     }
 
     /**
@@ -180,7 +201,7 @@ class CartPage
     {
         $I = $this->tester;
 
-        $shopItems = $I->findElementsFromElementBy($I->by($this->root), $this->shopItemRoot);
+        $shopItems = $I->findElementsFromElementBy($I->findBy($this->root), $this->shopItemRoot);
         foreach ($shopItems as $shopItem) {
             if ($this->getShopItemAddButton($shopItem)->displayed()) {
                 return $shopItem;
@@ -204,7 +225,7 @@ class CartPage
                 if ($addButton->displayed()) {
                     $addButton->click();
                 } else {
-                    throw new ItemIsOutOfStockException(new ShopItem($this->grabShopItemName($shopItem), $this->grabShopItemPrice($shopItem)));
+                    throw new ItemIsOutOfStockException(new ShopItemHelper($this->grabShopItemName($shopItem), $this->grabShopItemPrice($shopItem)));
                 }
             }
         } catch (ItemIsOutOfStockException $e) {
@@ -212,7 +233,7 @@ class CartPage
             $I->incomplete("Element with strategy '{$this->addButton['using']}' and value '{$this->addButton['value']} is not visible or not exists' or " . ($e->getMessage()));
         }
 
-        $this->cart->addItems(new ShopItem($this->grabShopItemName($shopItem)), $numberToAdd);
+        $this->cart->addItems(new ShopItemHelper($this->grabShopItemName($shopItem)), $numberToAdd);
     }
 
     /**
@@ -237,7 +258,7 @@ class CartPage
             $I->fail($e->getMessage());
         }
 
-        $this->cart->subItems(new ShopItem($this->grabShopItemName($shopItem)), $numberToSub);
+        $this->cart->subItems(new ShopItemHelper($this->grabShopItemName($shopItem)), $numberToSub);
     }
 
     /**
@@ -248,7 +269,7 @@ class CartPage
         $I = $this->tester;
 
         $I->amGoingTo('delete item');
-        $this->cart->deleteItem(new ShopItem($this->grabShopItemName($shopItem)));
+        $this->cart->deleteItem(new ShopItemHelper($this->grabShopItemName($shopItem)));
         $I->findElementFromElementBy($shopItem, $this->deleteButton)->click();
     }
 
@@ -259,7 +280,7 @@ class CartPage
 
         if ($this->entity == self::CART && $I->getRelativeUrl() != $this->url) {
             // если находимся фиг знает где, то перейдем в корзину
-            $I->by($headerPage->basketButton)->click();
+            $I->findBy($headerPage->basketButton)->click();
         }
 
         $I->comment('Check all items');
@@ -269,8 +290,11 @@ class CartPage
             $I->expectTo("see item from page in cart");
             $shopItem = $this->cart->shopItems[$this->grabShopItemName($shopItemOnPage)];
 
-            $I->amGoingTo("compare prices");
-            $I->assertEquals($shopItem->getPrice(), $this->grabShopItemPrice($shopItemOnPage));
+            // в карточках которые в условии ниже не показывается цена за 1 штуку товара (только на 1 позицию)
+            if ($this->entity != self::CHECKOUT_CART && $this->entity != self::FINISH_CART) {
+                $I->amGoingTo("compare prices");
+                $I->assertEquals($shopItem->getPrice(), $this->grabShopItemPrice($shopItemOnPage));
+            }
 
             $I->amGoingTo("compare quantities");
             $I->assertEquals($shopItem->quantity, $this->grabShopItemQuantity($shopItemOnPage));
@@ -279,12 +303,11 @@ class CartPage
             $I->assertEquals($shopItem->getTotalPrice(), $this->grabShopItemTotalPrice($shopItemOnPage));
         }
 
-//        $totalPrice = $this->cart->getTotalPrice();
-//        if ($this->entity == self::FINISH_CART && $this->cart->discount > 0) {
-//            // проверка скидки и всей цены со скидкой
-//            $I->expectTo('see discount');
-//            $I->assertEquals($I->grabIntFrom($this->discount), $this->cart->discount);
-//        }
+        if ($this->entity == self::FINISH_CART && $this->cart->discount > 0) {
+            // проверка скидки
+            $I->expectTo('see discount');
+            $I->assertEquals($I->grabIntFromString($I->findBy($this->discount)->text()), $this->cart->discount);
+        }
         $I->amGoingTo('check total price');
         //TODO: На товар приходится погрешность ~2 руб на позицию. Когда будет исправлена проблема с округлением, это нужно будет исправить
         $I->assertEqualsWithPermissibleLimitsOfErrors($this->grabTotalPrice(), $this->cart->getTotalPrice(), count($this->cart->shopItems) * 2);

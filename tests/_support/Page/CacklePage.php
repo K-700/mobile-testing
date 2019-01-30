@@ -26,7 +26,7 @@ class CacklePage
     {
         $I = $this->tester;
 
-        $nextCommentsButton = $I->by($this->nextCommentsButton);
+        $nextCommentsButton = $I->findBy($this->nextCommentsButton);
         while ($nextCommentsButton->displayed()) {
             $I->verticalSwipeToElement($nextCommentsButton);
             $nextCommentsButton->click();

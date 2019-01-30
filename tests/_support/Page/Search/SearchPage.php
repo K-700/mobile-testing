@@ -27,10 +27,10 @@ class SearchPage
 
         // by() ждет появления хотя-бы одного найденного товара, тогда как findElementsBy() не делает этого
         // если убрать строку ниже, то всегда будет найдено 0 товаров, по мне, так это лучше, чем sleep()
-        $I->by($shopItemPage->root);
+        $I->findBy($shopItemPage->root);
         $foundShopItems = $I->findElementsBy($shopItemPage->root);
         $I->assertGreaterThanOrEqual(1, count($foundShopItems));
-        $I->assertGreaterThanOrEqual(1, $I->grabIntFromString($I->by($this->foundItemsResultInfo)->text()));
+        $I->assertGreaterThanOrEqual(1, $I->grabIntFromString($I->findBy($this->foundItemsResultInfo)->text()));
         foreach ($foundShopItems as $shopItem) {
             $I->assertRegExp("/$regexp/ui", $I->findElementFromElementBy($shopItem, $shopItemPage->name)->text());
         }
@@ -43,7 +43,7 @@ class SearchPage
 
         sleep(15);
         $numberOfFoundShopItems = count($I->findElementsBy($shopItemPage->root));
-        $totalNumberOfFoundItems = $I->grabIntFromString($I->by($this->foundItemsResultInfo)->text());
+        $totalNumberOfFoundItems = $I->grabIntFromString($I->findBy($this->foundItemsResultInfo)->text());
         $I->assertEquals(0, $numberOfFoundShopItems);
         $I->assertEquals(0, $totalNumberOfFoundItems);
     }
@@ -52,6 +52,6 @@ class SearchPage
     {
         $I = $this->tester;
 
-        $I->assertEquals("Запрос был исправлен. Показаны результаты по запросу «{$trueRequest}». Найти «{$misspelRequest}»", $I->by($this->infoSuggestion)->text());
+        $I->assertEquals("Запрос был исправлен. Показаны результаты по запросу «{$trueRequest}». Найти «{$misspelRequest}»", $I->findBy($this->infoSuggestion)->text());
     }
 }

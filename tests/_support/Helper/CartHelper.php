@@ -2,9 +2,9 @@
 
 namespace Helper;
 
-class Cart
+class CartHelper
 {
-    /** @var ShopItem[] */
+    /** @var ShopItemHelper[] */
     public $shopItems;
 
     public $discount;
@@ -15,7 +15,7 @@ class Cart
         $this->discount = 0;
     }
 
-    public function addItems(ShopItem $shopItem, $quantity = 1)
+    public function addItems(ShopItemHelper $shopItem, $quantity = 1)
     {
         if (!array_key_exists($shopItem->getName(), $this->shopItems)) {
             $this->shopItems[$shopItem->getName()] = $shopItem;
@@ -25,7 +25,7 @@ class Cart
         }
     }
 
-    public function subItems(ShopItem $shopItem, $quantity = 1)
+    public function subItems(ShopItemHelper $shopItem, $quantity = 1)
     {
         if ($this->shopItems[$shopItem->getName()]->quantity <= $quantity) {
             unset($this->shopItems[$shopItem->getName()]);
@@ -34,7 +34,7 @@ class Cart
         }
     }
 
-    public function deleteItem(ShopItem $shopItem)
+    public function deleteItem(ShopItemHelper $shopItem)
     {
         unset($this->shopItems[$shopItem->getName()]);
     }

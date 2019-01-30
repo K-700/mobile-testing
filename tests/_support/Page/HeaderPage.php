@@ -7,6 +7,9 @@ class HeaderPage
 
     public $root;
 
+    public $mainLogo;
+    public $fullSiteButton;
+
     public $basketButton;
     public $totalQuantityCircle;
 
@@ -19,6 +22,9 @@ class HeaderPage
         $this->tester = $I;
 
         $this->root = ['using' => 'class name', 'value' => 'header__main'];
+
+        $this->mainLogo = ['using' => 'class name', 'value' => 'logo'];
+        $this->fullSiteButton = ['using' => 'class name', 'value' => 'adptr__backlink'];
 
         $this->totalQuantityCircle = ['using' => 'class name', 'value' => 'quantity-badge'];
         $this->basketButton = ['using' => 'class name', 'value' => 'header__cart'];
@@ -36,7 +42,7 @@ class HeaderPage
         $I = $this->tester;
 
         $oldUrl = $I->getRelativeUrl();
-        $I->by($this->basketButton)->click();
+        $I->findBy($this->basketButton)->click();
         $I->waitUrlChange($oldUrl);
     }
 
@@ -48,8 +54,8 @@ class HeaderPage
     {
         $I = $this->tester;
 
-        $I->by($this->searchOpenInputFieldButton)->click();
-        $I->by($this->searchQueryField)->value($request);
-        $I->by($this->searchButton)->click();
+        $I->findBy($this->searchOpenInputFieldButton)->click();
+        $I->findBy($this->searchQueryField)->value($request);
+        $I->findBy($this->searchButton)->click();
     }
 }

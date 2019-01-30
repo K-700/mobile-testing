@@ -22,6 +22,6 @@ class ItemIsOutOfStockPage
     {
         $I = $this->tester;
 
-        $I->findElementFromElementBy($I->by($this->root), $this->closeButton)->click();
+        $I->findElementFromElementBy($I->findBy($this->root), $this->closeButton)->click();
     }
 }
