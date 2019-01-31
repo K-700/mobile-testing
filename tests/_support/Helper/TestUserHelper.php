@@ -79,6 +79,11 @@ class TestUserHelper
         }
     }
 
+    /**
+     * Возвращает полный адрес
+     *
+     * @return string
+     */
     public function getFullAddress()
     {
         if (!isset($this->fullAddress)) {
@@ -87,7 +92,12 @@ class TestUserHelper
 
         return $this->fullAddress;
     }
-    
+
+    /**
+     * Возвращает часть адреса (начиная с улицы)
+     *
+     * @return string
+     */
     public function getPartialAddress()
     {
         $partialAddress = '';

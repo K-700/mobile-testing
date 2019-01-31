@@ -11,6 +11,12 @@ class IosExtension extends \Codeception\Extension
         Events::SUITE_BEFORE => 'beforeSuite'
     );
 
+    /**
+     * Подготовка набора тестов для начала мобильного тестированияю Вызывается перед каждым набором тестов.
+     *
+     * @param SuiteEvent $e
+     * @throws \Codeception\Exception\ModuleRequireException
+     */
     public function beforeSuite(SuiteEvent $e) {
         /** @var AppiumDriver $driver */
         $driver = $this->getModule('\Appium\AppiumDriver');

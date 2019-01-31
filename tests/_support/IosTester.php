@@ -1,9 +1,9 @@
 <?php
 
-use Codeception\Exception\ElementNotFound;
 use Facebook\WebDriver\Exception\TimeOutException;
 use Helper\CartHelper;
 use Page\HeaderPage;
+use Page\LoadPage;
 use Page\ShopItem\ShopItemPage;
 
 /**
@@ -73,6 +73,8 @@ class IosTester extends \Codeception\Actor
     }
 
     /**
+     * Returns displayed element
+     *
      * @param array $data
      * @options {"required":["using","value"]}
      * @return \Appium\TestCase\Element|\PHPUnit_Extensions_Selenium2TestCase_Element
@@ -87,7 +89,7 @@ class IosTester extends \Codeception\Actor
      *
      * @param array $data
      * @options {"required":["using","value"]}
-     * @return \Appium\TestCase\Element|\PHPUnit_Extensions_Selenium2TestCase_Element[]
+     * @return \Appium\TestCase\Element[]|\PHPUnit_Extensions_Selenium2TestCase_Element[]
      */
     public function findElementsBy($data)
     {
@@ -115,6 +117,8 @@ class IosTester extends \Codeception\Actor
     }
 
     /**
+     * Returns displayed element
+     *
      * @param \Appium\TestCase\Element|\PHPUnit_Extensions_Selenium2TestCase_Element $parentElement
      * @param $childData
      * @options {"required":["using","value"]}
@@ -126,10 +130,12 @@ class IosTester extends \Codeception\Actor
     }
 
     /**
+     * Returns displayed elements
+     *
      * @param \Appium\TestCase\Element|\PHPUnit_Extensions_Selenium2TestCase_Element $parentElement
      * @param $childData
      * @options {"required":["using","value"]}
-     * @return \Appium\TestCase\Element|\PHPUnit_Extensions_Selenium2TestCase_Element[]
+     * @return \Appium\TestCase\Element[]|\PHPUnit_Extensions_Selenium2TestCase_Element[]
      */
     public function findElementsFromElementBy($parentElement, $childData)
     {
@@ -143,22 +149,6 @@ class IosTester extends \Codeception\Actor
         return array_values(array_map(function($webElement) {
             return $this->elementFromResponseValue($webElement);
         }, $elements));
-    }
-
-    /**
-     * @param array $data
-     * @options {"required":["using","value"]}
-     * @return PHPUnit_Extensions_Selenium2TestCase_Element
-     */
-    public function byDisplayed($data)
-    {
-        foreach ($this->findElementsBy($data) as $element) {
-            if ($element->displayed()) {
-                return $element;
-            }
-        }
-
-        throw new ElementNotFound($data['value']);
     }
 
     /**
@@ -208,7 +198,26 @@ class IosTester extends \Codeception\Actor
     }
 
     /**
-     * @param PHPUnit_Extensions_Selenium2TestCase_Element $element
+     * @param array $data
+     * @options {"required":["using","value"]}
+     * @return bool
+     */
+    public function elementExistAndDisplayed($data)
+    {
+        $I = $this;
+        try {
+            return $I->findBy($data)->displayed();
+        } catch(PHPUnit_Extensions_Selenium2TestCase_WebDriverException $e) {
+            if ($e->getCode() != PHPUnit_Extensions_Selenium2TestCase_WebDriverException::NoSuchElement) {
+                throw $e;
+            }
+
+            return false;
+        }
+    }
+
+    /**
+     * @param \Appium\TestCase\Element|\PHPUnit_Extensions_Selenium2TestCase_Element $element
      */
     public function seeElement($element)
     {
@@ -233,9 +242,9 @@ class IosTester extends \Codeception\Actor
     }
 
     /**
-     * @param PHPUnit_Extensions_Selenium2TestCase_Element $select
+     * @param \Appium\TestCase\Element|\PHPUnit_Extensions_Selenium2TestCase_Element $select
      * @param string $option
-     * @throws NoSuchElementException
+     * @throws NoSuchElementException <option> doesn't exist in <select>
      */
     public function selectOption($select, $option)
     {
@@ -262,7 +271,7 @@ class IosTester extends \Codeception\Actor
 
     /**
      * @param string $text
-     * @param \PHPUnit_Extensions_Selenium2TestCase_Element $container
+     * @param \Appium\TestCase\Element|\PHPUnit_Extensions_Selenium2TestCase_Element $container
      */
     public function see($text, $container) {
         $this->assertContains($text, $container->text());
@@ -270,7 +279,7 @@ class IosTester extends \Codeception\Actor
 
     /**
      * @param string $text
-     * @param \PHPUnit_Extensions_Selenium2TestCase_Element $container
+     * @param \Appium\TestCase\Element|\PHPUnit_Extensions_Selenium2TestCase_Element $container
      */
     public function dontSee($text, $container)
     {
@@ -395,6 +404,7 @@ class IosTester extends \Codeception\Actor
      * @param int $offsetX
      * @param int $offsetY
      */
+//    TODO: подумать над этой функцией
     public function verticalSwipeToElement($element, $offsetX = 0, $offsetY = 0)
     {
         if ($element->displayed()) {
@@ -429,11 +439,12 @@ class IosTester extends \Codeception\Actor
     public function waitUrlChange($oldUrl)
     {
         $I = $this;
-
+        $loadPage = new LoadPage($I);
+        sleep(2);
         // ждем пока изменится url (значит страница прогрузилась)
         $I->waitForElementChange(
-            function () use ($I, $oldUrl) {
-                return $I->getRelativeUrl() == $oldUrl;
+            function () use ($I, $oldUrl, $loadPage) {
+                return ($I->getRelativeUrl() == $oldUrl || $loadPage->isPageLoading());
             },
             20
         );
@@ -472,6 +483,10 @@ class IosTester extends \Codeception\Actor
         $this->getScenario()->skip($message);
     }
 
+    /**
+     * Return relative URL of current page
+     * @return string
+     */
     public function getRelativeUrl()
     {
         return parse_url($this->getUrl(), PHP_URL_PATH);

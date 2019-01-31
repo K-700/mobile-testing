@@ -180,7 +180,7 @@ class CartPage
      * а не от корня DOM), так что пришлось выкручиваться. Причем, если задать кнопку не XPath а CSS, то он ее
      * найдет (что доказывается кнопкой удаления товара), но через CSS нельзя делать выборку по контенту, что необходимо в нашем случае
      *
-     * @param \PHPUnit_Extensions_Selenium2TestCase_Element $shopItem
+     * @param \Appium\TestCase\Element|\PHPUnit_Extensions_Selenium2TestCase_Element $shopItem
      * @return \Appium\TestCase\Element|\PHPUnit_Extensions_Selenium2TestCase_Element
      */
     public function getShopItemSubButton($shopItem)
@@ -195,7 +195,7 @@ class CartPage
      * Finds first item in cart with active "+" button
      *
      * @param CartPage->addButton|CartPage->subButton $button
-     * @return \PHPUnit_Extensions_Selenium2TestCase_Element found item
+     * @return \Appium\TestCase\Element|\PHPUnit_Extensions_Selenium2TestCase_Element found item
      */
     public function findShopItemWithActiveAddButton()
     {
@@ -211,7 +211,7 @@ class CartPage
     }
 
     /**
-     * @param \PHPUnit_Extensions_Selenium2TestCase_Element $shopItem
+     * @param \Appium\TestCase\Element|\PHPUnit_Extensions_Selenium2TestCase_Element $shopItem
      * @param int $numberToAdd number of items to add
      */
     public function addItems($shopItem, $numberToAdd)
@@ -237,7 +237,7 @@ class CartPage
     }
 
     /**
-     * @param \PHPUnit_Extensions_Selenium2TestCase_Element $shopItem
+     * @param \Appium\TestCase\Element|\PHPUnit_Extensions_Selenium2TestCase_Element $shopItem
      * @param int $numberToSub number of items to sub
      */
     public function subItems($shopItem, $numberToSub)
@@ -262,7 +262,7 @@ class CartPage
     }
 
     /**
-     * @param \PHPUnit_Extensions_Selenium2TestCase_Element $shopItem
+     * @param \Appium\TestCase\Element|\PHPUnit_Extensions_Selenium2TestCase_Element $shopItem
      */
     public function deleteItem($shopItem)
     {
@@ -273,6 +273,9 @@ class CartPage
         $I->findElementFromElementBy($shopItem, $this->deleteButton)->click();
     }
 
+    /**
+     * Проверка товаров в корзине
+     */
     public function checkItems()
     {
         $I = $this->tester;

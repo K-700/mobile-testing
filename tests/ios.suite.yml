@@ -20,8 +20,8 @@ modules:
         automationName: 'XCUITest'
         connection_timeout: 3600
         request_timeout: 3600
-        newCommandTimeout: 120
-        launchTimeout: 180000
+        newCommandTimeout: 120    #s
+        launchTimeout: 300000     #ms
         noReset: false
 extensions:
   enabled: [Extension\IosExtension, Group\RestartSession]

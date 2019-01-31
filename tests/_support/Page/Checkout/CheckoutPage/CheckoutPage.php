@@ -1,12 +1,10 @@
 <?php
 namespace Page\Checkout\CheckoutPage;
 
-use Appium\TestCase\Element;
 use Helper\CartHelper;
 use Helper\ShopItemHelper;
 use Page\CartPage;
 use Helper\TestUserHelper;
-use Page\HeaderPage;
 use Step\Ios\CheckoutTester;
 
 class CheckoutPage
@@ -323,6 +321,8 @@ class CheckoutPage
         $I->seeError('Вы не выбрали тип платежа', $this);
 
         $I->findBy($this->paymentType->root)->click();
+        codecept_debug('click payment type');
+        $I->pauseExecution();
         $this->checkTotalBlock(null, $this->paymentType->discount);
         if (!is_null($cart)) {
             // установим скидку для всех товаров в корзине (если скидки не было, то ничего не изменится)

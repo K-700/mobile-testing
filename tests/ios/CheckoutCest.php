@@ -16,7 +16,7 @@ class CheckoutCest
 
     public function _before(IosTester $I)
     {
-        $I->setUrl(['url' => 'http://test-site.com/shop/nails/gel-laki']);
+        $I->amOnPage('/shop/nails/gel-laki');
         $I->waitUrlChange($I->getUrl());
         $this->cart = $I->addRandomDifferentItemsToCart(2, 1);
 
@@ -74,6 +74,7 @@ class CheckoutCest
         $checkoutPage->inputPaymentType($user, $this->cart);
         // добавим доставку в корзину
         $checkoutPage->addDeliveryToCart($this->cart);
+        codecept_debug('before check coupon');
         $I->pauseExecution();
         $checkoutPage->checkCouponBlock();
         $checkoutPage->checkout();

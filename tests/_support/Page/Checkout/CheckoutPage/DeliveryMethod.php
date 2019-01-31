@@ -14,8 +14,6 @@ class DeliveryMethod
         'Самовывоз СДЕК' => 'sdek'
     ];
 
-    private $priceAndTime;
-
     /** @var \IosTester */
     protected $tester;
     protected $entity;
@@ -40,7 +38,6 @@ class DeliveryMethod
 
         $this->root = ['using' => 'xpath', 'value' => "//div[contains(@class,'delivery__tabs--item') and div[contains(text(),'$deliveryTypeName')]]"];
         $this->deliveryTab = ['using' => 'xpath', 'value' => "//span[contains(text(),'Доставка')]"];
-        $this->priceAndTime = ['using' => 'xpath', 'value' => '/span'];
         $this->addressInput = ['using' => 'xpath', 'value' => "//input[contains(@name, 'address')]"];
         $this->select = ['using' => 'xpath', 'value' => "//div[@class='adptr-order-delivery-block']//div[@class='adptr-custom-select__input']"];
         $this->selectOption = ['using' => 'xpath', 'value' => "//div[@class='adptr-custom-select__item']"];
@@ -55,7 +52,7 @@ class DeliveryMethod
     {
         $I = $this->tester;
 
-        $I->byDisplayed($this->select)->click();
+        $I->findVisibleBy($this->select)->click();
         $options = $I->findElementsFromElementBy($I->findBy($this->select), $this->selectOption);
         $I->expect('that there is at least one option on the page');
         $I->assertGreaterThanOrEqual(1, count($options));
