@@ -407,14 +407,24 @@ class IosTester extends \Codeception\Actor
 //    TODO: подумать над этой функцией
     public function verticalSwipeToElement($element, $offsetX = 0, $offsetY = 0)
     {
+        codecept_debug($windowHeight = $this->getWindowRect()['height']);
+        $headerHeight = 200;
         if ($element->displayed()) {
-            if ($element->location()['y'] <= 200) {
-                $this->swipe(0, 100, 0 + $offsetX, 300 - $element->location()['y'] + $offsetY);
+            $Ycoord = $element->location()['y'];
+            if ($Ycoord <= $headerHeight) {
+                $this->swipe(0, 100, 0 + $offsetX, 100 + $headerHeight - $Ycoord + $offsetY);
                 sleep(2);
-            } elseif ($element->location()['y'] >= 200) {
+            } elseif ($Ycoord >= $headerHeight) {
 //                codecept_debug($element->text());
 //                $this->pauseExecution();
-                $this->swipe(0, $element->location()['y'], 0, 200);
+                $deltaY = $Ycoord - $headerHeight;
+                if ($deltaY < 100) {
+                    $this->swipe(0, $Ycoord + 100 - $deltaY, 0 + $offsetX, $headerHeight + $offsetY);
+                } elseif ($deltaY > 300) {
+                    $this->swipe(0, $Ycoord / 1.5, 0 + $offsetX, $headerHeight + $offsetY);
+                } else {
+                    $this->swipe(0, $Ycoord, 0 + $offsetX, $headerHeight + $offsetY);
+                }
 //                codecept_debug($element->location()['y']);
 //                $this->pauseExecution();
             }

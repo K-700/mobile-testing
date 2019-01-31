@@ -130,7 +130,7 @@ class CheckoutPage
         $this->couponInputField = ['using' => 'id', 'value' => 'coupon-code'];
         $this->couponActivateButton = ['using' => 'id', 'value' => 'check-coupon'];
         $this->couponResetButton = ['using' => 'id', 'value' => 'reset-coupon'];
-        $this->couponError = ['using' => 'id', 'value' => 'coupon-error'];
+        $this->couponError = ['using' => 'class name', 'value' => 'coupon-error'];
 
         /** Итого */
         $this->deliveryPrice = ['using' => 'xpath', 'value'  => "//tr[.//td[contains(text(), 'Доставка')]]"];
@@ -320,9 +320,8 @@ class CheckoutPage
         $this->checkout();
         $I->seeError('Вы не выбрали тип платежа', $this);
 
+        $I->verticalSwipeToElement($I->findBy($this->paymentType->root));
         $I->findBy($this->paymentType->root)->click();
-        codecept_debug('click payment type');
-        $I->pauseExecution();
         $this->checkTotalBlock(null, $this->paymentType->discount);
         if (!is_null($cart)) {
             // установим скидку для всех товаров в корзине (если скидки не было, то ничего не изменится)
@@ -379,7 +378,6 @@ class CheckoutPage
         $I->see('Нужен товарный чек', $I->findBy($this->additionalInfoNeedCashMemoLabel));
         $I->findBy($this->additionalInfoNeedCashMemoLabel)->click();
         sleep(3);
-        $I->pauseExecution();
         $I->seeCheckboxIsChecked($I->findBy($this->additionalInfoNeedCashMemoCheckbox));
 
         $someText = 'Бла бла бла';
@@ -398,9 +396,11 @@ class CheckoutPage
 
         $I->amGoingTo('activate coupon with incorrect number');
         $I->assertFalse($I->findBy($this->couponBlock)->displayed());
+        $I->verticalSwipeToElement($I->findBy($this->couponShowButton));
         $I->findBy($this->couponShowButton)->click();
         $I->dontSeeElementBy($this->couponError);
         $I->findBy($this->couponInputField)->value(1111);
+        $I->verticalSwipeToElement($I->findBy($this->couponActivateButton));
         $I->findBy($this->couponActivateButton)->click();
         $I->assertEquals('Ошибка при активации купона', $I->findBy($this->couponError)->text());
         $I->findBy($this->couponResetButton)->click();
