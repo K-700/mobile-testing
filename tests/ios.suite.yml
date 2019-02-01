@@ -24,4 +24,4 @@ modules:
         launchTimeout: 300000     #ms
         noReset: false
 extensions:
-  enabled: [Extension\IosExtension, Group\RestartSession]
+  enabled: [Extension\Ios\HooksExtension, Group\Ios\RestartSession]

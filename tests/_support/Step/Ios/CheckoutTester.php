@@ -1,14 +1,14 @@
 <?php
 namespace Step\Ios;
 
-use Helper\CartHelper;
-use Helper\TestUserHelper;
-use Page\Checkout\CheckoutPage\CheckoutPage;
-use Page\Checkout\FinishCheckoutPage;
+use Helper\Cart;
+use Helper\TestUser;
+use Page\Ios\Checkout\CheckoutPage\CheckoutPage;
+use Page\Ios\Checkout\FinishCheckoutPage;
 
 class CheckoutTester extends \IosTester
 {
-    public function finishCheckout($parentPage, TestUserHelper $user, CartHelper $cart)
+    public function finishCheckout($parentPage, TestUser $user, Cart $cart)
     {
         $I = $this;
 

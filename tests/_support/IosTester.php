@@ -1,10 +1,10 @@
 <?php
 
 use Facebook\WebDriver\Exception\TimeOutException;
-use Helper\CartHelper;
-use Page\HeaderPage;
-use Page\LoadPage;
-use Page\ShopItem\ShopItemPage;
+use Helper\Cart;
+use Page\Ios\HeaderPage;
+use Page\Ios\LoadPage;
+use Page\Ios\ShopItem\ShopItemPage;
 
 /**
  * Inherited Methods
@@ -64,7 +64,8 @@ class IosTester extends \Codeception\Actor
             }
             usleep($intervalInMilliseconds * 1000);
         }
-
+        codecept_debug('timeout');
+        $this->pauseExecution();
         if ($last_exception) {
             throw $last_exception;
         }
@@ -354,13 +355,13 @@ class IosTester extends \Codeception\Actor
      *
      * @param int numberToAdd Number of elements to add
      * @param int maxQuantity Randomly increase number of added items in cart from 1 to maxQuantity
-     * @return CartHelper
+     * @return Cart
      */
     public function addRandomDifferentItemsToCart($numberToAdd = 5, $maxQuantity = 1)
     {
         $I = $this;
         $shopItemPage = new ShopItemPage($I);
-        $cart = new CartHelper();
+        $cart = new Cart();
         $totalQuantityCircle = $I->findBy((new HeaderPage($I))->totalQuantityCircle);
 
         $I->amGoingTo("add {$numberToAdd} random different items to cart");
@@ -407,24 +408,32 @@ class IosTester extends \Codeception\Actor
 //    TODO: подумать над этой функцией
     public function verticalSwipeToElement($element, $offsetX = 0, $offsetY = 0)
     {
-        codecept_debug($windowHeight = $this->getWindowRect()['height']);
         $headerHeight = 200;
         if ($element->displayed()) {
             $Ycoord = $element->location()['y'];
             if ($Ycoord <= $headerHeight) {
                 $this->swipe(0, 100, 0 + $offsetX, 100 + $headerHeight - $Ycoord + $offsetY);
                 sleep(2);
-            } elseif ($Ycoord >= $headerHeight) {
+            }
+
+            while ($Ycoord + $offsetY >= $headerHeight - 100 + 20) {
+                $this->swipe(0, $Ycoord, 0, $Ycoord - 100);
+                if ($Ycoord == $element->location()['y']) {
+                    // выходим если после свайпа положение элемента не изменилось
+                    return;
+                }
+
+                $Ycoord = $element->location()['y'];
 //                codecept_debug($element->text());
 //                $this->pauseExecution();
-                $deltaY = $Ycoord - $headerHeight;
-                if ($deltaY < 100) {
-                    $this->swipe(0, $Ycoord + 100 - $deltaY, 0 + $offsetX, $headerHeight + $offsetY);
-                } elseif ($deltaY > 300) {
-                    $this->swipe(0, $Ycoord / 1.5, 0 + $offsetX, $headerHeight + $offsetY);
-                } else {
-                    $this->swipe(0, $Ycoord, 0 + $offsetX, $headerHeight + $offsetY);
-                }
+//                $deltaY = $Ycoord - $headerHeight;
+//                if ($deltaY < 150) {
+//                    $this->swipe(0, $Ycoord + 200 - $deltaY, 0 + $offsetX, $headerHeight + $offsetY);
+//                } elseif ($deltaY > 550) {
+//                    $this->swipe(0, $Ycoord / 1.5, 0 + $offsetX, $headerHeight + $offsetY);
+//                } else {
+//                    $this->swipe(0, $Ycoord, 0 + $offsetX, $headerHeight + $offsetY);
+//                }
 //                codecept_debug($element->location()['y']);
 //                $this->pauseExecution();
             }

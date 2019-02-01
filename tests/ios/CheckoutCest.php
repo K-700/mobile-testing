@@ -1,17 +1,17 @@
 <?php
 
 use Codeception\Example;
-use Helper\CartHelper;
-use Helper\TestUserHelper;
-use Page\Checkout\CheckoutPage\CheckoutPage;
-use Page\Checkout\FullCartPage;
-use Page\Checkout\OneClickPage;
-use Page\HeaderPage;
+use Helper\Cart;
+use Helper\TestUser;
+use Page\Ios\Checkout\CheckoutPage\CheckoutPage;
+use Page\Ios\Checkout\FullCartPage;
+use Page\Ios\Checkout\OneClickPage;
+use Page\Ios\HeaderPage;
 use Step\Ios\CheckoutTester;
 
 class CheckoutCest
 {
-    /** @var CartHelper */
+    /** @var Cart */
     private $cart;
 
     public function _before(IosTester $I)
@@ -40,7 +40,7 @@ class CheckoutCest
      */
 //    public function oneClickCheckout(CheckoutTester $I, OneClickPage $oneClickPage, Example $userData)
 //    {
-//        $user = new TestUserHelper($userData);
+//        $user = new TestUser($userData);
 //
 //        $I->by($oneClickPage->oneClickButton)->click();
 //        $oneClickPage->submitForm($user);
@@ -61,7 +61,7 @@ class CheckoutCest
      */
     public function checkout(CheckoutTester $I, Example $userData)
     {
-        $user = new TestUserHelper($userData);
+        $user = new TestUser($userData);
         $fullCartPage =  new FullCartPage($I, $this->cart);
         $checkoutPage = new CheckoutPage($I, $this->cart);
 
@@ -76,8 +76,6 @@ class CheckoutCest
         // добавим доставку в корзину
         $checkoutPage->addDeliveryToCart($this->cart);
         $checkoutPage->checkCouponBlock();
-        codecept_debug('before checkout');
-        $I->pauseExecution();
         $checkoutPage->checkout();
         $I->finishCheckout($checkoutPage, $user, $this->cart);
     }
@@ -94,7 +92,7 @@ class CheckoutCest
      */
 //    public function checkoutWithUndetectableDeliveryCity(CheckoutTester $I, Example $userData)
 //    {
-//        $user = new TestUserHelper($userData);
+//        $user = new TestUser($userData);
 //        $fullCartPage =  new FullCartPage($I, $this->cart);
 //        $checkoutPage = new CheckoutPage($I, $this->cart);
 //
@@ -111,20 +109,20 @@ class CheckoutCest
     protected function userDataProvider()
     {
         return [
-            [
-                'name' => 'Владимир Владимирович Краб',
-                'phone' => '3254839210',
-                'mail' => 'krab@mail.ru',
-                'delivery_type' => 'Курьер',
-                'payment_type' => '100% предоплата банковской картой',
-                'country' => 'Россия',
-                'region' => 'Башкортостан (Республика)',
-                'city' => 'Уфа',
-                'street' => 'Пушкина',
-                'building' => '30',
-                'building_add' => 'C',
-                'flat' => '18'
-            ],
+//            [
+//                'name' => 'Владимир Владимирович Краб',
+//                'phone' => '3254839210',
+//                'mail' => 'krab@mail.ru',
+//                'delivery_type' => 'Курьер',
+//                'payment_type' => '100% предоплата банковской картой',
+//                'country' => 'Россия',
+//                'region' => 'Башкортостан (Республика)',
+//                'city' => 'Уфа',
+//                'street' => 'Пушкина',
+//                'building' => '30',
+//                'building_add' => 'C',
+//                'flat' => '18'
+//            ],
 //            [
 //                'name' => 'Шмеле Дмитрий Анатольевич',
 //                'phone' => '3254839210',
@@ -150,16 +148,16 @@ class CheckoutCest
 //                'region' => 'Челябинская область',
 //                'city' => 'Челябинск'
 //            ],
-//            [
-//                'name' => 'Челябинский челик2',
-//                'phone' => '3254839210',
-//                'mail' => 'chelik@imkosmetik.com',
-//                'delivery_type' => 'В фирменный магазин Имкосметик',
-//                'payment_type' => 'Оплата на расчётный счёт',
-//                'country' => 'Россия',
-//                'region' => 'Челябинская область',
-//                'city' => 'Челябинск'
-//            ],
+            [
+                'name' => 'Челябинский челик2',
+                'phone' => '3254839210',
+                'mail' => 'chelik@imkosmetik.com',
+                'delivery_type' => 'В фирменный магазин Имкосметик',
+                'payment_type' => 'Оплата на расчётный счёт',
+                'country' => 'Россия',
+                'region' => 'Челябинская область',
+                'city' => 'Челябинск'
+            ],
 //            [
 //                'name' => 'Московский мажор',
 //                'phone' => '3254839210',

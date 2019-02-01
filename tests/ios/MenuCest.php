@@ -1,9 +1,9 @@
 <?php
 
-use Page\Menu\Navs\NavsPage;
-use Page\Menu\Navs\DeliveryNav\DeliveryMethod;
-use Page\Menu\Navs\DeliveryNav\DeliveryPage;
-use Page\Menu\Navs\NewsNav\NewsPage;
+use Page\Ios\Menu\Navs\NavsPage;
+use Page\Ios\Menu\Navs\DeliveryNav\DeliveryMethod;
+use Page\Ios\Menu\Navs\DeliveryNav\DeliveryPage;
+use Page\Ios\Menu\Navs\NewsNav\NewsPage;
 use Codeception\Example;
 
 class MenuCest

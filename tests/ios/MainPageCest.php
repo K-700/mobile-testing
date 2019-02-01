@@ -1,9 +1,9 @@
 <?php
 
 // TODO: раскомментить после починки прогрузки retail-rocket
-use Page\MainPage\RetailRocketPage;
-use Helper\TestUserHelper;
-use Page\MainPage\MainPage;
+use Page\Ios\MainPage\RetailRocketPage;
+use Helper\TestUser;
+use Page\Ios\MainPage\MainPage;
 use Codeception\Example;
 
 class MainPageCest
@@ -57,7 +57,7 @@ class MainPageCest
      */
     public function subscribeFormTest(IosTester $I, Example $userData, MainPage $mainPage)
     {
-        $testUser = new TestUserHelper($userData);
+        $testUser = new TestUser($userData);
         $subscribeForm = $mainPage->subscribeForm;
 
         $subscribeForm->invalidSubscribe();

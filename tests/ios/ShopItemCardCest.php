@@ -1,8 +1,8 @@
 <?php
 
-use Helper\CartHelper;
-use Page\CartPage;
-use Page\ShopItem\ShopItemCardPage;
+use Helper\Cart;
+use Page\Ios\CartPage;
+use Page\Ios\ShopItem\ShopItemCardPage;
 
 class ShopItemCardCest
 {
@@ -75,7 +75,7 @@ class ShopItemCardCest
      */
     public function addAndSubItemsTest(\IosTester $I, ShopItemCardPage $shopItemCardPage)
     {
-        $fullCartPage = new CartPage($I, CartPage::CART, new CartHelper());
+        $fullCartPage = new CartPage($I, CartPage::CART, new Cart());
 
         // проверка кнопки увеличения количества товара
         $numberOfItemsToAdd = 5;

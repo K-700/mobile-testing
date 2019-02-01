@@ -1,6 +1,6 @@
 <?php
 
-use Page\MainPage\JivositePage;
+use Page\Ios\MainPage\JivositePage;
 
 class JivositeCest
 {

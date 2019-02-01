@@ -1,6 +1,6 @@
 <?php
 
-use Page\Menu\CategoriesPage;
+use Page\Ios\Menu\CategoriesPage;
 
 class CategoriesCest
 {

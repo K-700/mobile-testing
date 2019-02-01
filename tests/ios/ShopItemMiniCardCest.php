@@ -1,7 +1,7 @@
 <?php
 
-use Page\Checkout\FullCartPage;
-use Page\ShopItem\ShopItemPage;
+use Page\Ios\Checkout\FullCartPage;
+use Page\Ios\ShopItem\ShopItemPage;
 use Codeception\Example;
 
 class ShopItemMiniCardCest

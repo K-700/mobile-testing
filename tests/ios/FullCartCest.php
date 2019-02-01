@@ -1,12 +1,12 @@
 <?php
 
-use Helper\CartHelper;
-use Page\Checkout\FullCartPage;
-use Page\HeaderPage;
+use Helper\Cart;
+use Page\Ios\Checkout\FullCartPage;
+use Page\Ios\HeaderPage;
 
 class FullCartCest
 {
-    /** @var CartHelper */
+    /** @var Cart */
     private $cart;
 
     public function _before(IosTester $I)

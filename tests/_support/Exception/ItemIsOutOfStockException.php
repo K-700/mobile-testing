@@ -1,14 +1,14 @@
 <?php
 namespace Exception;
 
-use Helper\ShopItemHelper;
+use Helper\ShopItem;
 
 class ItemIsOutOfStockException extends \Exception
 {
-    /** @var ShopItemHelper */
+    /** @var ShopItem */
     private $shopItem;
 
-    public function __construct(ShopItemHelper $shopItem)
+    public function __construct(ShopItem $shopItem)
     {
         parent::__construct("Item '{$shopItem->getName()}' is out of stock");
         $this->shopItem = $shopItem;

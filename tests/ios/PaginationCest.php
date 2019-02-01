@@ -1,7 +1,7 @@
 <?php
 
-use Page\Menu\Navs\NavsPage;
-use Page\PaginationPage;
+use Page\Ios\Menu\Navs\NavsPage;
+use Page\Ios\PaginationPage;
 
 class PaginationCest
 {

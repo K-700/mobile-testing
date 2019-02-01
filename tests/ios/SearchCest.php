@@ -1,7 +1,7 @@
 <?php
 
-use Page\HeaderPage;
-use Page\Search\SearchPage;
+use Page\Ios\HeaderPage;
+use Page\Ios\Search\SearchPage;
 use Codeception\Example;
 
 class SearchCest
